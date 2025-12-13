@@ -1,6 +1,5 @@
 /**
  * YourEar - Browser-based hearing assessment
- * Main application entry point
  */
 
 import './styles.css';
@@ -8,49 +7,32 @@ import { HearingTest, TestEventType } from './audio/hearing-test';
 import { playCalibrationTone, stopTone } from './audio/tone-generator';
 import { Audiogram, generateSummary } from './ui/audiogram';
 import { saveProfile, getAllProfiles, getLatestProfile } from './storage/profile';
-import { HearingProfile, Ear, TEST_FREQUENCIES } from './types';
+import { HearingProfile } from './types';
 
-// Application state
 let hearingTest: HearingTest | null = null;
-let audiogram: Audiogram | null = null;
 let currentScreen: 'home' | 'calibration' | 'test' | 'results' = 'home';
+let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
-// DOM Elements
 const app = document.getElementById('app')!;
 
-/**
- * Initialize the application
- */
-function init(): void {
-  render();
-}
-
-/**
- * Main render function
- */
 function render(): void {
+  // Cleanup keyboard handler
+  if (keydownHandler) {
+    document.removeEventListener('keydown', keydownHandler);
+    keydownHandler = null;
+  }
+  
   switch (currentScreen) {
-    case 'home':
-      renderHomeScreen();
-      break;
-    case 'calibration':
-      renderCalibrationScreen();
-      break;
-    case 'test':
-      renderTestScreen();
-      break;
-    case 'results':
-      renderResultsScreen();
-      break;
+    case 'home': renderHome(); break;
+    case 'calibration': renderCalibration(); break;
+    case 'test': renderTest(); break;
+    case 'results': renderResults(); break;
   }
 }
 
-/**
- * Home screen with start button and history
- */
-function renderHomeScreen(): void {
+function renderHome(): void {
   const profiles = getAllProfiles();
-  const latestProfile = getLatestProfile();
+  const latest = getLatestProfile();
   
   app.innerHTML = `
     <div class="screen">
@@ -84,12 +66,12 @@ function renderHomeScreen(): void {
         </div>
       </div>
       
-      ${latestProfile ? `
+      ${latest ? `
         <div class="card">
           <h2 class="card__title">📊 Your Latest Result</h2>
           <div id="audiogram-preview"></div>
           <p style="color: var(--text-muted); margin-top: var(--spacing-md); font-size: 0.9rem;">
-            Tested on ${new Date(latestProfile.createdAt).toLocaleDateString()}
+            Tested on ${latest.createdAt.toLocaleDateString()}
           </p>
           <button class="btn btn--secondary" id="view-latest" style="margin-top: var(--spacing-md);">
             View Details
@@ -104,7 +86,7 @@ function renderHomeScreen(): void {
             ${profiles.slice(0, 5).map(p => `
               <div class="profile-item" data-id="${p.id}">
                 <span class="profile-item__name">${p.name || 'Hearing Test'}</span>
-                <span class="profile-item__date">${new Date(p.createdAt).toLocaleDateString()}</span>
+                <span class="profile-item__date">${p.createdAt.toLocaleDateString()}</span>
               </div>
             `).join('')}
           </div>
@@ -126,54 +108,34 @@ function renderHomeScreen(): void {
       </div>
       
       <footer class="footer">
-        <p>
-          Open source project · 
-          <a href="https://github.com/ISMAELMARTINEZ/yourear" target="_blank">GitHub</a>
-        </p>
+        <p>Open source project · <a href="https://github.com/ISMAELMARTINEZ/yourear" target="_blank">GitHub</a></p>
       </footer>
     </div>
   `;
   
-  // Event listeners
   document.getElementById('start-test')?.addEventListener('click', () => {
     currentScreen = 'calibration';
     render();
   });
   
   document.getElementById('view-latest')?.addEventListener('click', () => {
-    if (latestProfile) {
-      showResults(latestProfile);
-    }
+    if (latest) showResults(latest);
   });
   
-  // Render audiogram preview if exists
-  if (latestProfile) {
-    const previewContainer = document.getElementById('audiogram-preview');
-    if (previewContainer) {
-      const previewAudiogram = new Audiogram(previewContainer, {
-        width: 500,
-        height: 350,
-      });
-      previewAudiogram.setProfile(latestProfile);
-    }
+  if (latest) {
+    const container = document.getElementById('audiogram-preview');
+    if (container) new Audiogram(container, 500, 350).setProfile(latest);
   }
   
-  // Profile click handlers
   document.querySelectorAll('.profile-item').forEach(item => {
     item.addEventListener('click', () => {
-      const id = item.getAttribute('data-id');
-      const profile = profiles.find(p => p.id === id);
-      if (profile) {
-        showResults(profile);
-      }
+      const profile = profiles.find(p => p.id === item.getAttribute('data-id'));
+      if (profile) showResults(profile);
     });
   });
 }
 
-/**
- * Calibration screen - verify audio is working
- */
-function renderCalibrationScreen(): void {
+function renderCalibration(): void {
   app.innerHTML = `
     <div class="screen">
       <header class="header">
@@ -199,119 +161,41 @@ function renderCalibrationScreen(): void {
             </button>
           </div>
           
-          <p class="calibration__tip">
-            💡 The test will present tones to each ear separately. Make sure both sides work!
-          </p>
+          <p class="calibration__tip">💡 The test will present tones to each ear separately. Make sure both sides work!</p>
           
           <div style="margin-top: var(--spacing-xl); display: flex; gap: var(--spacing-md); justify-content: center;">
-            <button class="btn btn--secondary" id="back-home">
-              ← Back
-            </button>
-            <button class="btn btn--primary btn--large" id="begin-test">
-              I'm ready - Begin Test →
-            </button>
+            <button class="btn btn--secondary" id="back-home">← Back</button>
+            <button class="btn btn--primary btn--large" id="begin-test">I'm ready - Begin Test →</button>
           </div>
         </div>
       </div>
     </div>
   `;
   
-  // Event listeners
-  document.getElementById('test-right')?.addEventListener('click', async () => {
-    await playCalibrationTone('right');
-  });
-  
-  document.getElementById('test-left')?.addEventListener('click', async () => {
-    await playCalibrationTone('left');
-  });
-  
-  document.getElementById('back-home')?.addEventListener('click', () => {
-    stopTone();
-    currentScreen = 'home';
-    render();
-  });
-  
-  document.getElementById('begin-test')?.addEventListener('click', () => {
-    stopTone();
-    currentScreen = 'test';
-    startTest();
-  });
+  document.getElementById('test-right')?.addEventListener('click', () => playCalibrationTone('right'));
+  document.getElementById('test-left')?.addEventListener('click', () => playCalibrationTone('left'));
+  document.getElementById('back-home')?.addEventListener('click', () => { stopTone(); currentScreen = 'home'; render(); });
+  document.getElementById('begin-test')?.addEventListener('click', () => { stopTone(); startTest(); });
 }
 
-/**
- * Start the hearing test
- */
 function startTest(): void {
   hearingTest = new HearingTest();
-  
-  // Subscribe to test events
-  hearingTest.on((event: TestEventType, data?: unknown) => {
-    switch (event) {
-      case 'stateChange':
-      case 'toneStart':
-      case 'toneEnd':
-        updateTestDisplay();
-        break;
-      case 'thresholdFound':
-        console.log('Threshold found:', data);
-        break;
-      case 'earComplete':
-        console.log('Ear complete:', data);
-        break;
-      case 'testComplete':
-        handleTestComplete();
-        break;
-    }
+  hearingTest.on((event: TestEventType) => {
+    if (event === 'stateChange') render();
+    if (event === 'testComplete') handleTestComplete();
   });
-  
+  currentScreen = 'test';
   render();
   hearingTest.start();
 }
 
-/**
- * Test screen - active hearing test
- */
-function renderTestScreen(): void {
+function renderTest(): void {
   const state = hearingTest?.getState();
   const progress = hearingTest?.getProgress() ?? 0;
-  
   if (!state) return;
   
-  const frequencyLabel = state.currentFrequency >= 1000 
-    ? `${state.currentFrequency / 1000}` 
-    : String(state.currentFrequency);
-  const frequencyUnit = state.currentFrequency >= 1000 ? 'kHz' : 'Hz';
-  
-  // Different UI for playing vs waiting for response
-  const playingUI = `
-    <div class="listening-state">
-      <div class="listening-state__icon">🎧</div>
-      <div class="sound-wave">
-        <div class="sound-wave__bar"></div>
-        <div class="sound-wave__bar"></div>
-        <div class="sound-wave__bar"></div>
-        <div class="sound-wave__bar"></div>
-        <div class="sound-wave__bar"></div>
-      </div>
-      <p class="listening-state__text">Listen carefully...</p>
-      <p class="listening-state__hint">A tone may be playing now</p>
-    </div>
-  `;
-  
-  const responseUI = `
-    <div class="response-state">
-      <p class="response-state__question">Did you hear a tone?</p>
-      <div class="response-buttons">
-        <button class="btn btn--heard" id="heard">
-          ✓ Yes, I heard it
-        </button>
-        <button class="btn btn--not-heard" id="not-heard">
-          ✗ No, I didn't
-        </button>
-      </div>
-      <p class="response-state__hint">Press <kbd>Space</kbd> for yes, <kbd>N</kbd> for no</p>
-    </div>
-  `;
+  const freqLabel = state.currentFrequency >= 1000 ? `${state.currentFrequency / 1000}` : String(state.currentFrequency);
+  const freqUnit = state.currentFrequency >= 1000 ? 'kHz' : 'Hz';
   
   app.innerHTML = `
     <div class="screen">
@@ -327,22 +211,38 @@ function renderTestScreen(): void {
         
         <div class="test-display">
           <div class="test-display__info">
-            <div class="test-display__frequency">
-              ${frequencyLabel}<span class="test-display__frequency-unit">${frequencyUnit}</span>
-            </div>
-            
+            <div class="test-display__frequency">${freqLabel}<span class="test-display__frequency-unit">${freqUnit}</span></div>
             <div class="test-display__ear test-display__ear--${state.currentEar}">
-              ${state.currentEar === 'right' ? '◯' : '✕'} 
-              ${state.currentEar === 'right' ? 'Right' : 'Left'} Ear
+              ${state.currentEar === 'right' ? '◯' : '✕'} ${state.currentEar === 'right' ? 'Right' : 'Left'} Ear
             </div>
           </div>
           
-          ${state.isPlaying ? playingUI : responseUI}
+          ${state.isPlaying ? `
+            <div class="listening-state">
+              <div class="listening-state__icon">🎧</div>
+              <div class="sound-wave">
+                <div class="sound-wave__bar"></div>
+                <div class="sound-wave__bar"></div>
+                <div class="sound-wave__bar"></div>
+                <div class="sound-wave__bar"></div>
+                <div class="sound-wave__bar"></div>
+              </div>
+              <p class="listening-state__text">Listen carefully...</p>
+              <p class="listening-state__hint">A tone may be playing now</p>
+            </div>
+          ` : `
+            <div class="response-state">
+              <p class="response-state__question">Did you hear a tone?</p>
+              <div class="response-buttons">
+                <button class="btn btn--heard" id="heard">✓ Yes, I heard it</button>
+                <button class="btn btn--not-heard" id="not-heard">✗ No, I didn't</button>
+              </div>
+              <p class="response-state__hint">Press <kbd>Space</kbd> for yes, <kbd>N</kbd> for no</p>
+            </div>
+          `}
         </div>
         
-        <button class="btn btn--secondary" id="stop-test" style="margin-top: var(--spacing-xl); width: 100%;">
-          Stop Test
-        </button>
+        <button class="btn btn--secondary" id="stop-test" style="margin-top: var(--spacing-xl); width: 100%;">Stop Test</button>
       </div>
       
       <div class="card">
@@ -356,99 +256,38 @@ function renderTestScreen(): void {
     </div>
   `;
   
-  // Event listeners
-  document.getElementById('heard')?.addEventListener('click', () => {
-    hearingTest?.respondHeard();
-  });
+  document.getElementById('heard')?.addEventListener('click', () => hearingTest?.respondHeard());
+  document.getElementById('not-heard')?.addEventListener('click', () => hearingTest?.respondNotHeard());
+  document.getElementById('stop-test')?.addEventListener('click', () => { hearingTest?.stop(); currentScreen = 'home'; render(); });
   
-  document.getElementById('not-heard')?.addEventListener('click', () => {
-    hearingTest?.respondNotHeard();
-  });
-  
-  document.getElementById('stop-test')?.addEventListener('click', () => {
-    hearingTest?.stop();
-    currentScreen = 'home';
-    render();
-  });
-  
-  // Keyboard shortcuts
-  const handleKeydown = (e: KeyboardEvent) => {
-    if (e.code === 'Space' || e.code === 'Enter') {
-      e.preventDefault();
-      hearingTest?.respondHeard();
-    } else if (e.code === 'KeyN' || e.code === 'Escape') {
-      e.preventDefault();
-      hearingTest?.respondNotHeard();
-    }
+  keydownHandler = (e: KeyboardEvent) => {
+    if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); hearingTest?.respondHeard(); }
+    else if (e.code === 'KeyN' || e.code === 'Escape') { e.preventDefault(); hearingTest?.respondNotHeard(); }
   };
-  
-  document.addEventListener('keydown', handleKeydown);
-  
-  // Clean up on screen change (store reference to remove later)
-  (window as unknown as { _keydownHandler?: typeof handleKeydown })._keydownHandler = handleKeydown;
+  document.addEventListener('keydown', keydownHandler);
 }
 
-/**
- * Update test display without full re-render
- */
-function updateTestDisplay(): void {
-  if (currentScreen === 'test') {
-    // Remove old keydown handler before re-render
-    const oldHandler = (window as unknown as { _keydownHandler?: (e: KeyboardEvent) => void })._keydownHandler;
-    if (oldHandler) {
-      document.removeEventListener('keydown', oldHandler);
-    }
-    renderTestScreen();
-  }
-}
-
-/**
- * Handle test completion
- */
 function handleTestComplete(): void {
   const results = hearingTest?.getResults();
   if (!results) return;
-  
-  // Save profile
-  const profile = saveProfile({
-    ...results,
-    name: `Hearing Test - ${new Date().toLocaleDateString()}`,
-  });
-  
-  showResults(profile);
+  showResults(saveProfile({ ...results, name: `Hearing Test - ${new Date().toLocaleDateString()}` }));
 }
 
-/**
- * Show results screen
- */
 function showResults(profile: HearingProfile): void {
   currentScreen = 'results';
-  renderResultsScreen(profile);
+  renderResults(profile);
 }
 
-/**
- * Results screen with audiogram
- */
-function renderResultsScreen(profile?: HearingProfile): void {
+function renderResults(profile?: HearingProfile): void {
   const displayProfile = profile || getLatestProfile();
-  
-  if (!displayProfile) {
-    currentScreen = 'home';
-    render();
-    return;
-  }
-  
-  const summary = generateSummary(displayProfile);
+  if (!displayProfile) { currentScreen = 'home'; render(); return; }
   
   app.innerHTML = `
     <div class="screen">
       <header class="header">
         <div class="header__logo">📊</div>
         <h1 class="header__title">Your Results</h1>
-        <p class="header__subtitle">
-          ${displayProfile.name || 'Hearing Assessment'} · 
-          ${new Date(displayProfile.createdAt).toLocaleDateString()}
-        </p>
+        <p class="header__subtitle">${displayProfile.name || 'Hearing Assessment'} · ${displayProfile.createdAt.toLocaleDateString()}</p>
       </header>
       
       <div class="card card--glow">
@@ -458,69 +297,35 @@ function renderResultsScreen(profile?: HearingProfile): void {
       
       <div class="card">
         <h2 class="card__title">📋 Summary</h2>
-        <div class="summary">${summary}</div>
+        <div class="summary">${generateSummary(displayProfile)}</div>
       </div>
       
       <div class="card">
         <h2 class="card__title">📖 Understanding Your Results</h2>
         <div style="color: var(--text-secondary); line-height: 1.8;">
-          <p>
-            <strong>The audiogram</strong> shows your hearing thresholds - the quietest sounds 
-            you can hear at each frequency. Lower values (toward the top) mean better hearing.
-          </p>
-          <p style="margin-top: var(--spacing-md);">
-            <strong>Normal hearing</strong> is generally considered to be thresholds of 20 dB HL 
-            or better (shown in the tinted area). Values above this may indicate some degree of 
-            hearing loss at those frequencies.
-          </p>
-          <p style="margin-top: var(--spacing-md);">
-            <strong>Symbols:</strong> ◯ = Right ear (red) · ✕ = Left ear (teal)
-          </p>
+          <p><strong>The audiogram</strong> shows your hearing thresholds - the quietest sounds you can hear at each frequency. Lower values (toward the top) mean better hearing.</p>
+          <p style="margin-top: var(--spacing-md);"><strong>Normal hearing</strong> is generally considered to be thresholds of 20 dB HL or better (shown in the tinted area).</p>
+          <p style="margin-top: var(--spacing-md);"><strong>Symbols:</strong> ◯ = Right ear (red) · ✕ = Left ear (teal)</p>
         </div>
-        
-        <div class="disclaimer">
-          ⚠️ Remember: This is a self-assessment for curiosity only. Consult an audiologist 
-          for professional evaluation, especially if you notice hearing difficulties.
-        </div>
+        <div class="disclaimer">⚠️ Remember: This is a self-assessment for curiosity only. Consult an audiologist for professional evaluation.</div>
       </div>
       
       <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
-        <button class="btn btn--secondary" id="back-home" style="flex: 1;">
-          ← Home
-        </button>
-        <button class="btn btn--primary" id="new-test" style="flex: 1;">
-          🎵 New Test
-        </button>
+        <button class="btn btn--secondary" id="back-home" style="flex: 1;">← Home</button>
+        <button class="btn btn--primary" id="new-test" style="flex: 1;">🎵 New Test</button>
       </div>
       
       <footer class="footer">
-        <p>
-          Open source project · 
-          <a href="https://github.com/ISMAELMARTINEZ/yourear" target="_blank">GitHub</a>
-        </p>
+        <p>Open source project · <a href="https://github.com/ISMAELMARTINEZ/yourear" target="_blank">GitHub</a></p>
       </footer>
     </div>
   `;
   
-  // Initialize audiogram
-  const audiogramContainer = document.getElementById('audiogram');
-  if (audiogramContainer) {
-    audiogram = new Audiogram(audiogramContainer);
-    audiogram.setProfile(displayProfile);
-  }
+  const container = document.getElementById('audiogram');
+  if (container) new Audiogram(container).setProfile(displayProfile);
   
-  // Event listeners
-  document.getElementById('back-home')?.addEventListener('click', () => {
-    currentScreen = 'home';
-    render();
-  });
-  
-  document.getElementById('new-test')?.addEventListener('click', () => {
-    currentScreen = 'calibration';
-    render();
-  });
+  document.getElementById('back-home')?.addEventListener('click', () => { currentScreen = 'home'; render(); });
+  document.getElementById('new-test')?.addEventListener('click', () => { currentScreen = 'calibration'; render(); });
 }
 
-// Start the app
-init();
-
+render();
