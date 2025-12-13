@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  base: '/yourear/', // GitHub Pages base path
   root: '.',
   publicDir: 'public',
   build: {
