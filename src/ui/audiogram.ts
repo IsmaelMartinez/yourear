@@ -71,6 +71,16 @@ export class Audiogram {
     this.draw();
   }
 
+  /** Get the canvas element for export purposes */
+  getCanvas(): HTMLCanvasElement {
+    return this.canvas;
+  }
+
+  /** Get the canvas as a data URL (PNG format) */
+  toDataURL(): string {
+    return this.canvas.toDataURL('image/png');
+  }
+
   private freqToX(freq: number): number {
     const plotWidth = this.width - PADDING.left - PADDING.right;
     const minLog = Math.log10(FREQUENCIES[0]);

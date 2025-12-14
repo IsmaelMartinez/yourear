@@ -7,6 +7,10 @@ import { getLatestProfile } from '../storage/profile';
 import { Audiogram, generateSummary } from '../ui/audiogram';
 import { getState, navigateTo } from '../state/app-state';
 import { HearingProfile, formatFrequency } from '../types';
+import { exportToPDF } from '../services/pdf-export';
+
+// Store audiogram instance for PDF export
+let currentAudiogram: Audiogram | null = null;
 
 export function renderResults(): void {
   const app = getAppContainer();
@@ -45,10 +49,13 @@ export function renderResults(): void {
       ${renderUnderstandingSection(displayProfile)}
       
       <nav class="nav-buttons" aria-label="Result actions">
-        <button class="btn btn--secondary" id="back-home" style="flex: 1;">
+        <button class="btn btn--secondary" id="back-home">
           <span aria-hidden="true">←</span> Home
         </button>
-        <button class="btn btn--primary" id="new-test" style="flex: 1;">
+        <button class="btn btn--secondary" id="export-pdf">
+          <span aria-hidden="true">📄</span> Export PDF
+        </button>
+        <button class="btn btn--primary" id="new-test">
           <span aria-hidden="true">🎵</span> New Test
         </button>
       </nav>
@@ -63,11 +70,15 @@ export function renderResults(): void {
   
   // Render audiogram
   const container = document.getElementById('audiogram');
-  if (container) new Audiogram(container).setProfile(displayProfile);
+  if (container) {
+    currentAudiogram = new Audiogram(container);
+    currentAudiogram.setProfile(displayProfile);
+  }
   
   // Event bindings
   onClick('back-home', () => navigateTo('home'));
   onClick('new-test', () => navigateTo('calibration'));
+  onClick('export-pdf', () => handleExportPDF(displayProfile));
   
   focusMain();
 }
@@ -87,15 +98,46 @@ function renderUnderstandingSection(profile: HearingProfile): string {
       <h2 class="card__title" id="understanding-title"><span aria-hidden="true">📖</span> Understanding Your Results</h2>
       <div class="text-secondary-lg">
         <p><strong>The audiogram</strong> shows your hearing thresholds - the quietest sounds you can hear at each frequency. Lower values (toward the top) mean better hearing.</p>
-        <p class="mt-md"><strong>Normal hearing</strong> is generally considered to be thresholds of 20 dB HL or better (shown in the teal tinted area).</p>
         ${profile.age ? `
           <p class="mt-md"><strong>Age comparison</strong>: The yellow area shows the typical range for people your age. If your results are within or above this area, your hearing is normal for your age.</p>
-        ` : ''}
+        ` : `
+          <p class="mt-md"><strong>Normal hearing</strong> is generally considered to be thresholds of 20 dB HL or better, though this varies by frequency and age.</p>
+        `}
         <p class="mt-md"><strong>Symbols:</strong> <span aria-hidden="true">◯</span> Circle = Right ear (red) · <span aria-hidden="true">✕</span> X = Left ear (teal)</p>
       </div>
       <div class="disclaimer" role="alert"><span aria-hidden="true">⚠️</span> Remember: This is a self-assessment for curiosity only. Consult an audiologist for professional evaluation.</div>
     </section>
   `;
+}
+
+/**
+ * Handle PDF export button click
+ */
+async function handleExportPDF(profile: HearingProfile): Promise<void> {
+  if (!currentAudiogram) {
+    console.error('Audiogram not available for export');
+    return;
+  }
+  
+  const button = document.getElementById('export-pdf');
+  if (button) {
+    button.setAttribute('disabled', 'true');
+    button.innerHTML = '<span aria-hidden="true">⏳</span> Exporting...';
+  }
+  
+  try {
+    const audiogramDataUrl = currentAudiogram.toDataURL();
+    await exportToPDF(profile, audiogramDataUrl);
+    announce('PDF exported successfully. Check your downloads folder.');
+  } catch (error) {
+    console.error('PDF export failed:', error);
+    announce('PDF export failed. Please try again.');
+  } finally {
+    if (button) {
+      button.removeAttribute('disabled');
+      button.innerHTML = '<span aria-hidden="true">📄</span> Export PDF';
+    }
+  }
 }
 
 /**
