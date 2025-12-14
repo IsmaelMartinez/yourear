@@ -9,7 +9,7 @@ import { HearingProfile } from '../types';
 import { HearingTest } from '../audio/hearing-test';
 
 export type Screen = 'home' | 'calibration' | 'test' | 'results' | 'comparison';
-export type TestMode = 'full' | 'quick';
+export type TestMode = 'full' | 'quick' | 'detailed';
 
 export interface AppState {
   /** Current active screen */

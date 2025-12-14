@@ -5,7 +5,7 @@
 import { getState, setHearingTest, navigateTo } from '../state/app-state';
 import { createProfile } from '../storage/profile';
 import { HearingTest, TestEventType } from '../audio/hearing-test';
-import { QUICK_TEST_CONFIG } from '../types';
+import { QUICK_TEST_CONFIG, DETAILED_TEST_CONFIG } from '../types';
 
 // Render callback - set by main.ts
 let renderCallback: (() => void) | null = null;
@@ -22,7 +22,11 @@ export function setTestRenderCallback(callback: () => void): void {
  */
 export function startTest(): void {
   const { testMode, userAge } = getState();
-  const config = testMode === 'quick' ? QUICK_TEST_CONFIG : undefined;
+  const config = testMode === 'quick' 
+    ? QUICK_TEST_CONFIG 
+    : testMode === 'detailed' 
+      ? DETAILED_TEST_CONFIG 
+      : undefined;
   const hearingTest = new HearingTest(config);
   
   // Store test instance
@@ -49,7 +53,12 @@ export function startTest(): void {
 function handleTestComplete(hearingTest: HearingTest, userAge?: number): void {
   const results = hearingTest.getResults();
   const { testMode } = getState();
-  const testLabel = testMode === 'quick' ? 'Quick Test' : 'Full Test';
+  const testLabels: Record<string, string> = {
+    quick: 'Quick Test',
+    full: 'Full Test',
+    detailed: 'Detailed Test',
+  };
+  const testLabel = testLabels[testMode] || 'Hearing Test';
   
   const profile = createProfile({ 
     ...results, 

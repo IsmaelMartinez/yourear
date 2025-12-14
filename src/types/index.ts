@@ -17,7 +17,11 @@ export interface HearingProfile {
   thresholds: HearingThreshold[];
 }
 
+// Standard audiometric frequencies (octave intervals)
 export const TEST_FREQUENCIES = [250, 500, 1000, 2000, 4000, 8000] as const;
+
+// Extended frequencies including inter-octave (half-octave) frequencies
+export const EXTENDED_FREQUENCIES = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000] as const;
 
 export interface TestState {
   currentFrequency: number;
@@ -58,6 +62,12 @@ export const QUICK_TEST_CONFIG: TestConfig = {
   frequencies: QUICK_TEST_FREQUENCIES,
   toneDuration: 1000,     // Shorter tones (vs 1500ms in full test)
   responseDuration: 2500, // Faster response window (vs 3000ms)
+};
+
+// Detailed test: All frequencies including inter-octave (~15 minutes)
+export const DETAILED_TEST_CONFIG: TestConfig = {
+  ...DEFAULT_TEST_CONFIG,
+  frequencies: EXTENDED_FREQUENCIES,
 };
 
 /**
@@ -107,11 +117,16 @@ export function getExpectedThresholds(age: number): Record<number, { median: num
   const ageOffset = Math.max(0, age - 20);
   
   return {
+    125:  { median: Math.round(ageOffset * 0.05), p90: Math.round(ageOffset * 0.15 + 8) },
     250:  { median: Math.round(ageOffset * 0.1), p90: Math.round(ageOffset * 0.2 + 10) },
     500:  { median: Math.round(ageOffset * 0.15), p90: Math.round(ageOffset * 0.25 + 10) },
+    750:  { median: Math.round(ageOffset * 0.17), p90: Math.round(ageOffset * 0.30 + 10) },
     1000: { median: Math.round(ageOffset * 0.2), p90: Math.round(ageOffset * 0.35 + 10) },
+    1500: { median: Math.round(ageOffset * 0.27), p90: Math.round(ageOffset * 0.45 + 10) },
     2000: { median: Math.round(ageOffset * 0.35), p90: Math.round(ageOffset * 0.55 + 10) },
+    3000: { median: Math.round(ageOffset * 0.5), p90: Math.round(ageOffset * 0.8 + 12) },
     4000: { median: Math.round(ageOffset * 0.7), p90: Math.round(ageOffset * 1.1 + 15) },
+    6000: { median: Math.round(ageOffset * 0.85), p90: Math.round(ageOffset * 1.3 + 18) },
     8000: { median: Math.round(ageOffset * 1.0), p90: Math.round(ageOffset * 1.5 + 20) },
   };
 }

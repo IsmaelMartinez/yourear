@@ -45,6 +45,10 @@ export function renderHome(): void {
             <span id="quick-test-desc" style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">3 frequencies · ~2 min</span>
           </button>
         </div>
+        <button class="btn btn--secondary mt-md" id="start-detailed-test" aria-describedby="detailed-test-desc" style="width: 100%;">
+          <span aria-hidden="true">🔬</span> Detailed Test
+          <span id="detailed-test-desc" style="display: inline; font-size: 0.75rem; opacity: 0.8; font-weight: normal; margin-left: 0.5rem;">11 frequencies incl. inter-octave · ~15 min</span>
+        </button>
         
         <div class="disclaimer" role="alert">
           <span aria-hidden="true">⚠️</span> <strong>Medical Disclaimer:</strong> This is a self-assessment tool for curiosity and general awareness only. 
@@ -64,6 +68,7 @@ export function renderHome(): void {
   // Event bindings
   onClick('start-full-test', () => navigateTo('calibration', { mode: 'full' }));
   onClick('start-quick-test', () => navigateTo('calibration', { mode: 'quick' }));
+  onClick('start-detailed-test', () => navigateTo('calibration', { mode: 'detailed' }));
   onClick('view-latest', () => { if (latest) navigateTo('results', { profile: latest }); });
   onClick('compare-tests', () => navigateTo('comparison'));
   
