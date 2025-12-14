@@ -15,7 +15,7 @@
 
 ## ✨ Features
 
-- 🎵 **Pure-tone audiometry** - Tests at 250, 500, 1000, 2000, 4000, and 8000 Hz
+- 🎵 **Pure-tone audiometry** - Tests at standard frequencies (250-8000 Hz) plus inter-octave frequencies
 - 🎧 **Separate ear testing** - Tests right and left ears independently
 - 📊 **Standard audiogram** - Results displayed following audiological conventions
 - 💾 **Local storage** - Save your hearing profiles (no account needed)
@@ -172,7 +172,7 @@ yourear/
 
 Contributions are welcome! Some ideas:
 
-- [ ] Add more test frequencies (125 Hz, 750 Hz, 3000 Hz, 6000 Hz)
+- [x] ~~Add more test frequencies (125 Hz, 750 Hz, 3000 Hz, 6000 Hz)~~ ✅ Implemented (Detailed Test mode)
 - [ ] Speech audiometry (word recognition tests)
 - [x] ~~Export results as PDF~~ ✅ Implemented
 - [x] ~~Compare multiple profiles over time~~ ✅ Implemented

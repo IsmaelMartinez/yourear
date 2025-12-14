@@ -34,19 +34,12 @@ Make the app installable and work offline.
 
 ---
 
-### 4. Extended Frequencies
+### 4. ~~Extended Frequencies~~ ✅ IMPLEMENTED
 **Value:** Medium | **Effort:** ~1-2 hours
 
 Add inter-octave frequencies for more detailed testing.
 
-**Frequencies to add:**
-- 125 Hz (low bass)
-- 750 Hz (between 500-1000)
-- 1500 Hz (between 1000-2000)
-- 3000 Hz (between 2000-4000)
-- 6000 Hz (between 4000-8000)
-
-**Consideration:** Make this optional ("Detailed Test" mode)
+**Implementation:** Added "Detailed Test" mode with 11 frequencies including 125, 750, 1500, 3000, and 6000 Hz.
 
 ---
 
@@ -192,7 +185,7 @@ Internationalization for broader reach.
 | Phase | Features | Effort | Status |
 |-------|----------|--------|--------|
 | **Phase 1** | PDF Export, Profile Comparison | ~6 hours | ✅ DONE |
-| **Phase 2** | PWA Support, Extended Frequencies | ~4 hours | In Progress |
+| **Phase 2** | PWA Support, Extended Frequencies | ~4 hours | ✅ DONE |
 | **Phase 3** | Speech-in-Noise, Tinnitus Matcher | ~14 hours | Pending |
 | **Phase 4** | Hearing Compensation (if demand) | ~20 hours | Pending |
 
