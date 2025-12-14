@@ -247,31 +247,31 @@ export class Audiogram {
   }
 
   private drawLegend(): void {
-    const x = this.width - PADDING.right - 130;
-    let y = PADDING.top + 15;
+    const x = PADDING.left + 20;
+    // Position from bottom, working upward
+    let y = this.height - PADDING.bottom - 20;
     
     this.ctx.fillStyle = COLORS.text;
     this.ctx.font = '11px "DM Sans", sans-serif';
     this.ctx.textAlign = 'left';
     
-    // Right ear
-    this.drawCircle(x, y, COLORS.rightEar);
-    this.ctx.fillText('Right ear', x + 18, y + 4);
-    y += 22;
-    
-    // Left ear
-    this.drawX(x, y, COLORS.leftEar);
-    this.ctx.fillText('Left ear', x + 18, y + 4);
-    y += 22;
-    
-    // Expected for age (if shown)
+    // Expected for age (if shown) - draw first (bottom)
     if (this.profile?.age) {
-      // Show expected range indicator (yellow area)
       this.ctx.fillStyle = COLORS.expectedRange;
       this.ctx.fillRect(x - 10, y - 6, 20, 12);
       this.ctx.fillStyle = COLORS.text;
       this.ctx.fillText(`Typical range (${this.profile.age}y)`, x + 18, y + 4);
+      y -= 22;
     }
+    
+    // Left ear
+    this.drawX(x, y, COLORS.leftEar);
+    this.ctx.fillText('Left ear', x + 18, y + 4);
+    y -= 22;
+    
+    // Right ear (top of legend)
+    this.drawCircle(x, y, COLORS.rightEar);
+    this.ctx.fillText('Right ear', x + 18, y + 4);
   }
 }
 
