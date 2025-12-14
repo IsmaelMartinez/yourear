@@ -148,6 +148,14 @@ function renderChangesSummary(profiles: HearingProfile[]): string {
   const daysBetween = Math.round((newest.createdAt.getTime() - oldest.createdAt.getTime()) / (1000 * 60 * 60 * 24));
   const change = calculatePTAChange(oldest, newest);
   
+  // Check if profiles have standard PTA frequencies (500, 1000, 2000 Hz)
+  const ptaFreqs = [500, 1000, 2000];
+  const hasStandardPTA = (profile: HearingProfile) => {
+    const freqs = profile.thresholds.map(t => t.frequency);
+    return ptaFreqs.filter(f => freqs.includes(f)).length >= 2;
+  };
+  const usingStandardPTA = hasStandardPTA(oldest) && hasStandardPTA(newest);
+  
   const formatChange = (val: number | null): string => {
     if (val === null || isNaN(val)) return 'N/A';
     const sign = val > 0 ? '+' : '';
@@ -162,6 +170,11 @@ function renderChangesSummary(profiles: HearingProfile[]): string {
     return '(stable)';
   };
   
+  const label = usingStandardPTA ? 'PTA' : 'Avg';
+  const footnote = usingStandardPTA 
+    ? 'PTA = Pure Tone Average (500, 1000, 2000 Hz). Changes ≤5 dB are typically within test variability.'
+    : 'Avg = Average of tested frequencies (Quick Test uses 1000, 4000, 8000 Hz). For accurate PTA, use Full or Detailed Test.';
+  
   return `
     <div class="comparison-summary" style="margin-top: var(--spacing-lg); padding: var(--spacing-lg); background: var(--bg-tertiary); border-radius: var(--radius-md);">
       <h3 style="font-size: 1rem; margin-bottom: var(--spacing-md);"><span aria-hidden="true">📊</span> Change Over ${daysBetween} Days</h3>
@@ -170,16 +183,16 @@ function renderChangesSummary(profiles: HearingProfile[]): string {
       </p>
       <div style="margin-top: var(--spacing-md); display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
         <div>
-          <strong>Right Ear PTA:</strong><br>
+          <strong>Right Ear ${label}:</strong><br>
           ${formatChange(change.right)} <span style="color: var(--text-muted); font-size: 0.85rem;">${getInterpretation(change.right)}</span>
         </div>
         <div>
-          <strong>Left Ear PTA:</strong><br>
+          <strong>Left Ear ${label}:</strong><br>
           ${formatChange(change.left)} <span style="color: var(--text-muted); font-size: 0.85rem;">${getInterpretation(change.left)}</span>
         </div>
       </div>
       <p class="text-muted-sm" style="margin-top: var(--spacing-md); font-size: 0.8rem;">
-        PTA = Pure Tone Average (500, 1000, 2000 Hz). Changes ≤5 dB are typically within test variability.
+        ${footnote}
       </p>
     </div>
   `;
