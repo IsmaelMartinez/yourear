@@ -56,91 +56,50 @@ src/
 
 ---
 
-### 1.2 Inline HTML Templates
+### 1.2 Inline HTML Templates (Intentionally Unchanged)
 
-**Problem:** HTML is embedded in TypeScript strings, making it hard to maintain and losing IDE support.
+**Analysis:** HTML is embedded in TypeScript strings.
 
-**Current pattern:**
-```typescript
-app.innerHTML = `
-  <main id="main-content" class="screen">
-    <header class="header">
-      <!-- 100+ lines of HTML -->
-    </header>
-  </main>
-`;
-```
+**Decision:** Keep as-is. For this size project, template literals work well. The refactoring to separate screen files already improved readability significantly.
 
-**Options:**
-1. **Keep as-is** - Works fine for this size project
-2. **Template literals with tagged functions** - Better syntax highlighting
-3. **Lit-html or similar** - Lightweight templating (~3KB)
-
-**Recommendation:** Keep current approach but extract templates to separate functions for readability.
-
-**Impact:** Medium  
-**Effort:** 2-3 hours  
-**Priority:** ⭐⭐
+**Status:** ⏸️ DEFERRED (acceptable as-is)
 
 ---
 
-### 1.3 No State Management Pattern
+### 1.3 ~~No State Management Pattern~~ ✅ RESOLVED
 
-**Problem:** State is scattered across:
+**Problem (was):** State was scattered across:
 - `let currentScreen` (module-level)
 - `let hearingTest` (module-level)  
 - `let userAge` (module-level)
 - `hearingTest.getState()` (class state)
 
-**Recommendation:** Simple state object:
+**Solution implemented:** Created `src/state/app-state.ts` with centralized state management.
 
-```typescript
-interface AppState {
-  screen: 'home' | 'calibration' | 'test' | 'results';
-  testMode: 'full' | 'quick';
-  userAge?: number;
-  currentProfile?: HearingProfile;
-}
-
-const state: AppState = { screen: 'home', testMode: 'full' };
-```
-
-**Impact:** Medium  
-**Effort:** 2 hours  
-**Priority:** ⭐⭐
+**Status:** ✅ COMPLETED
 
 ---
 
-### 1.4 Missing Error Boundaries
+### 1.4 ~~Missing Error Boundaries~~ ✅ PARTIALLY RESOLVED
 
-**Problem:** No error handling for:
+**Problem (was):** No error handling for:
 - AudioContext failures (user permission denied)
 - LocalStorage quota exceeded
 - Canvas rendering failures
 
-**Recommendation:** Add try-catch with user-friendly error messages.
+**Solution implemented:** Added `AudioInitError` class in `tone-generator.ts` for AudioContext errors. LocalStorage and Canvas errors remain unhandled (acceptable for now).
 
-**Impact:** Medium  
-**Effort:** 1-2 hours  
-**Priority:** ⭐⭐
+**Status:** ✅ PARTIALLY COMPLETED
 
 ---
 
-### 1.5 README Project Structure Outdated
+### 1.5 ~~README Project Structure Outdated~~ ✅ RESOLVED
 
-**Problem:** README mentions `src/audio/context.ts` which doesn't exist.
+**Problem (was):** README mentioned `src/audio/context.ts` which didn't exist.
 
-```markdown
-# Current README (incorrect):
-├── audio/
-│   ├── context.ts       # AudioContext management  <-- doesn't exist
-│   ├── tone-generator.ts
-│   └── hearing-test.ts
-```
+**Solution:** README updated with accurate project structure including new directories: `screens/`, `state/`, `services/`, `utils/`.
 
-**Impact:** Low  
-**Effort:** 15 minutes  
-**Priority:** ⭐
+**Status:** ✅ COMPLETED
 
 ---
 
@@ -150,7 +109,7 @@ const state: AppState = { screen: 'home', testMode: 'full' };
 
 ### 2.1 ~~Repetitive Event Listener Patterns~~ ✅ RESOLVED
 
-**Problem:** Same pattern repeated 15+ times:
+**Problem (was):** Same pattern repeated 15+ times:
 
 ```typescript
 document.getElementById('start-full-test')?.addEventListener('click', () => {
@@ -186,83 +145,33 @@ const actions = {
 
 ---
 
-### 2.2 Repeated Inline Styles
+### 2.2 ~~Repeated Inline Styles~~ ✅ RESOLVED
 
-**Problem:** Same styles appear multiple times in HTML templates:
+**Problem (was):** Same styles appeared multiple times in HTML templates.
 
-```typescript
-// Appears 5+ times:
-style="color: var(--text-muted); margin-top: var(--spacing-md); font-size: 0.9rem;"
-```
+**Solution:** Created CSS utility classes in `styles.css`: `.text-muted-sm`, `.text-secondary-lg`, `.flex-buttons`, `.nav-buttons`, `.text-center`, `.mt-md`.
 
-**Recommendation:** Create CSS utility classes:
-
-```css
-.text-muted-small {
-  color: var(--text-muted);
-  margin-top: var(--spacing-md);
-  font-size: 0.9rem;
-}
-```
-
-**Impact:** Low  
-**Effort:** 30 minutes  
-**Priority:** ⭐
+**Status:** ✅ COMPLETED
 
 ---
 
-### 2.3 Duplicated Frequency Formatting
+### 2.3 ~~Duplicated Frequency Formatting~~ ✅ RESOLVED
 
-**Problem:** Frequency formatting logic appears in multiple places:
+**Problem (was):** Frequency formatting logic appeared in multiple places.
 
-```typescript
-// In main.ts:
-const freqLabel = state.currentFrequency >= 1000 
-  ? `${state.currentFrequency / 1000}` : String(state.currentFrequency);
+**Solution:** Created `formatFrequency()` utility in `types/index.ts` with 'short', 'full', and 'spoken' styles. Added 5 tests. Now used consistently across `audiogram.ts`, `screens/test.ts`, and `screens/results.ts`.
 
-// In audiogram.ts:
-const label = freq >= 1000 ? `${freq / 1000}k` : String(freq);
-```
-
-**Recommendation:** Create shared utility:
-
-```typescript
-export function formatFrequency(hz: number, style: 'short' | 'spoken' = 'short'): string {
-  if (style === 'spoken') {
-    return hz >= 1000 ? `${hz / 1000} kilohertz` : `${hz} hertz`;
-  }
-  return hz >= 1000 ? `${hz / 1000}k` : String(hz);
-}
-```
-
-**Impact:** Low  
-**Effort:** 30 minutes  
-**Priority:** ⭐
+**Status:** ✅ COMPLETED
 
 ---
 
-### 2.4 Magic Numbers in Audiogram
+### 2.4 ~~Magic Numbers in Audiogram~~ ✅ RESOLVED
 
-**Problem:** Several magic numbers without explanation:
+**Problem (was):** Several magic numbers without explanation.
 
-```typescript
-const REFERENCE_DB = -60;  // Why -60? No comment
-const rampTime = 0.02;     // 20ms - could be named constant
-```
+**Solution:** Added comprehensive JSDoc documentation to `tone-generator.ts` including `REFERENCE_DB_FS`, `MIN_GAIN_DB`, `MAX_GAIN_DB`, and `RAMP_TIME_SEC` with explanations.
 
-**Recommendation:** Add constants with documentation:
-
-```typescript
-/** 
- * Reference level: 0 dB HL maps to approximately -60 dB relative to full scale.
- * This provides headroom for testing up to 90+ dB HL without clipping.
- */
-const REFERENCE_DB_FS = -60;
-```
-
-**Impact:** Low  
-**Effort:** 30 minutes  
-**Priority:** ⭐
+**Status:** ✅ COMPLETED
 
 ---
 
