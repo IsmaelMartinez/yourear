@@ -12,7 +12,6 @@ interface Colors {
   text: string;
   rightEar: string;
   leftEar: string;
-  normalRange: string;
   expectedRange: string;
   expectedLine: string;
 }
@@ -31,7 +30,6 @@ const COLORS: Colors = {
   text: '#a0a0b0',
   rightEar: '#ff6b6b',   // Sync with --accent-right in styles.css
   leftEar: '#4ecdc4',    // Sync with --accent-left in styles.css
-  normalRange: 'rgba(78, 205, 196, 0.1)',
   expectedRange: 'rgba(251, 191, 36, 0.15)',
   expectedLine: '#fbbf24', // Sync with --accent-warning in styles.css
 };
@@ -91,8 +89,9 @@ export class Audiogram {
     ctx.fillStyle = COLORS.background;
     ctx.fillRect(0, 0, width, height);
     
-    this.drawNormalRange();
-    
+    // Only show age-expected range (removed generic "normal range" as it's
+    // misleading - clinical normal ≤20dB is unrealistic for older adults
+    // at higher frequencies like 4kHz and 8kHz)
     if (this.profile?.age) {
       this.drawExpectedRange(this.profile.age);
     }
@@ -104,16 +103,6 @@ export class Audiogram {
       this.drawThresholds(this.profile.thresholds);
       this.drawLegend();
     }
-  }
-
-  private drawNormalRange(): void {
-    this.ctx.fillStyle = COLORS.normalRange;
-    this.ctx.fillRect(
-      PADDING.left,
-      this.dbToY(DB_MIN),
-      this.width - PADDING.left - PADDING.right,
-      this.dbToY(20) - this.dbToY(DB_MIN)
-    );
   }
 
   private drawExpectedRange(age: number): void {
@@ -275,24 +264,13 @@ export class Audiogram {
     this.ctx.fillText('Left ear', x + 18, y + 4);
     y += 22;
     
-    // Normal range indicator
-    this.ctx.fillStyle = COLORS.normalRange;
-    this.ctx.fillRect(x - 10, y - 6, 20, 12);
-    this.ctx.fillStyle = COLORS.text;
-    this.ctx.fillText('Normal range', x + 18, y + 4);
-    y += 22;
-    
     // Expected for age (if shown)
     if (this.profile?.age) {
-      this.ctx.strokeStyle = COLORS.expectedLine;
-      this.ctx.lineWidth = 2;
-      this.ctx.setLineDash([4, 4]);
-      this.ctx.beginPath();
-      this.ctx.moveTo(x - 10, y);
-      this.ctx.lineTo(x + 10, y);
-      this.ctx.stroke();
-      this.ctx.setLineDash([]);
-      this.ctx.fillText(`Typical (age ${this.profile.age})`, x + 18, y + 4);
+      // Show expected range indicator (yellow area)
+      this.ctx.fillStyle = COLORS.expectedRange;
+      this.ctx.fillRect(x - 10, y - 6, 20, 12);
+      this.ctx.fillStyle = COLORS.text;
+      this.ctx.fillText(`Typical range (${this.profile.age}y)`, x + 18, y + 4);
     }
   }
 }

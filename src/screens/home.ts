@@ -82,7 +82,7 @@ function renderLatestResult(latest: HearingProfile): string {
   return `
     <section class="card" aria-labelledby="latest-result-title">
       <h2 class="card__title" id="latest-result-title"><span aria-hidden="true">📊</span> Your Latest Result${latest.age ? ` (Age ${latest.age})` : ''}</h2>
-      <div id="audiogram-preview" role="img" aria-label="Audiogram showing your latest hearing test results"></div>
+      <div id="audiogram-preview" class="audiogram-container" role="img" aria-label="Audiogram showing your latest hearing test results"></div>
       <p class="text-muted-sm">
         Tested on <time datetime="${latest.createdAt.toISOString()}">${latest.createdAt.toLocaleDateString()}</time>
       </p>
