@@ -119,16 +119,18 @@ export class Audiogram {
     const expected = getExpectedThresholds(age);
     const ctx = this.ctx;
     
-    // Draw filled area between median and p90
+    // Draw filled area between p10 and p90 (typical range for age)
     ctx.fillStyle = COLORS.expectedRange;
     ctx.beginPath();
     
     // Use all frequencies shown on the audiogram
     const testFreqs = FREQUENCIES;
-    ctx.moveTo(this.freqToX(testFreqs[0]), this.dbToY(expected[testFreqs[0]].median));
-    testFreqs.forEach(f => ctx.lineTo(this.freqToX(f), this.dbToY(expected[f].median)));
     
-    // Bottom line (p90) - reverse order
+    // Top line (p10 - better hearing)
+    ctx.moveTo(this.freqToX(testFreqs[0]), this.dbToY(expected[testFreqs[0]].p10));
+    testFreqs.forEach(f => ctx.lineTo(this.freqToX(f), this.dbToY(expected[f].p10)));
+    
+    // Bottom line (p90 - worse hearing) - reverse order
     for (let i = testFreqs.length - 1; i >= 0; i--) {
       ctx.lineTo(this.freqToX(testFreqs[i]), this.dbToY(expected[testFreqs[i]].p90));
     }
