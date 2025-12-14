@@ -11,6 +11,7 @@ import { renderHome } from './screens/home';
 import { renderCalibration } from './screens/calibration';
 import { renderTest, cleanupTestScreen } from './screens/test';
 import { renderResults } from './screens/results';
+import { renderComparison } from './screens/comparison';
 import { createProfile, getAllProfiles } from './storage/profile';
 
 // ============================================
@@ -39,6 +40,9 @@ function render(): void {
       break;
     case 'results': 
       renderResults(); 
+      break;
+    case 'comparison':
+      renderComparison();
       break;
   }
 }

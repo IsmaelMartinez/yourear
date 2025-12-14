@@ -597,6 +597,47 @@ body::before {
   color: var(--text-muted);
 }
 
+/* Profile checkbox for comparison selection */
+.profile-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.profile-checkbox:hover {
+  background: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+.profile-checkbox:has(input:checked) {
+  border-color: var(--accent-primary);
+  background: rgba(124, 106, 239, 0.1);
+}
+
+.profile-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.profile-checkbox input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-checkbox__info {
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }

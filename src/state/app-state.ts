@@ -8,7 +8,7 @@
 import { HearingProfile } from '../types';
 import { HearingTest } from '../audio/hearing-test';
 
-export type Screen = 'home' | 'calibration' | 'test' | 'results';
+export type Screen = 'home' | 'calibration' | 'test' | 'results' | 'comparison';
 export type TestMode = 'full' | 'quick';
 
 export interface AppState {

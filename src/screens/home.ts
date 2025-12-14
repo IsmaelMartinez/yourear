@@ -65,6 +65,7 @@ export function renderHome(): void {
   onClick('start-full-test', () => navigateTo('calibration', { mode: 'full' }));
   onClick('start-quick-test', () => navigateTo('calibration', { mode: 'quick' }));
   onClick('view-latest', () => { if (latest) navigateTo('results', { profile: latest }); });
+  onClick('compare-tests', () => navigateTo('comparison'));
   
   // Render audiogram preview (wider for better readability)
   if (latest) {
@@ -105,6 +106,11 @@ function renderTestHistory(profiles: HearingProfile[]): string {
           </button>
         `).join('')}
       </nav>
+      ${profiles.length >= 2 ? `
+        <button class="btn btn--secondary mt-md" id="compare-tests" style="width: 100%;">
+          <span aria-hidden="true">📈</span> Compare Tests Over Time
+        </button>
+      ` : ''}
     </section>
   `;
 }
