@@ -66,10 +66,10 @@ export function renderHome(): void {
   onClick('start-quick-test', () => navigateTo('calibration', { mode: 'quick' }));
   onClick('view-latest', () => { if (latest) navigateTo('results', { profile: latest }); });
   
-  // Render audiogram preview
+  // Render audiogram preview (wider for better readability)
   if (latest) {
     const container = document.getElementById('audiogram-preview');
-    if (container) new Audiogram(container, 500, 350).setProfile(latest);
+    if (container) new Audiogram(container, 600, 400).setProfile(latest);
   }
   
   // Profile history click handlers

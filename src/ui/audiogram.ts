@@ -258,7 +258,7 @@ export class Audiogram {
   }
 
   private drawLegend(): void {
-    const x = this.width - PADDING.right - 120;
+    const x = this.width - PADDING.right - 130;
     let y = PADDING.top + 15;
     
     this.ctx.fillStyle = COLORS.text;
@@ -275,6 +275,13 @@ export class Audiogram {
     this.ctx.fillText('Left ear', x + 18, y + 4);
     y += 22;
     
+    // Normal range indicator
+    this.ctx.fillStyle = COLORS.normalRange;
+    this.ctx.fillRect(x - 10, y - 6, 20, 12);
+    this.ctx.fillStyle = COLORS.text;
+    this.ctx.fillText('Normal range', x + 18, y + 4);
+    y += 22;
+    
     // Expected for age (if shown)
     if (this.profile?.age) {
       this.ctx.strokeStyle = COLORS.expectedLine;
@@ -285,7 +292,7 @@ export class Audiogram {
       this.ctx.lineTo(x + 10, y);
       this.ctx.stroke();
       this.ctx.setLineDash([]);
-      this.ctx.fillText(`Expected (${this.profile.age}y)`, x + 18, y + 4);
+      this.ctx.fillText(`Typical (age ${this.profile.age})`, x + 18, y + 4);
     }
   }
 }
