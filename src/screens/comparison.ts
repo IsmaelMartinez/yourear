@@ -149,14 +149,14 @@ function renderChangesSummary(profiles: HearingProfile[]): string {
   const change = calculatePTAChange(oldest, newest);
   
   const formatChange = (val: number | null): string => {
-    if (val === null) return 'N/A';
+    if (val === null || isNaN(val)) return 'N/A';
     const sign = val > 0 ? '+' : '';
     const emoji = val <= -5 ? '📈' : val >= 5 ? '📉' : '➡️';
     return `${emoji} ${sign}${val.toFixed(0)} dB`;
   };
   
   const getInterpretation = (val: number | null): string => {
-    if (val === null) return '';
+    if (val === null || isNaN(val)) return '';
     if (val <= -5) return '(improved)';
     if (val >= 5) return '(declined)';
     return '(stable)';

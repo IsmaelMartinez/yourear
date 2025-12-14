@@ -248,6 +248,8 @@ export class ComparisonAudiogram {
 
 /**
  * Calculate the change in PTA between two profiles
+ * Uses available frequencies from 500, 1000, 2000 Hz (standard PTA)
+ * Falls back to any available frequencies if standard ones aren't present
  */
 export function calculatePTAChange(
   older: HearingProfile,
@@ -255,11 +257,24 @@ export function calculatePTAChange(
 ): { right: number | null; left: number | null } {
   const ptaFreqs = [500, 1000, 2000];
   
-  const calcPTA = (profile: HearingProfile, ear: 'rightEar' | 'leftEar') => {
-    const values = ptaFreqs
+  const calcPTA = (profile: HearingProfile, ear: 'rightEar' | 'leftEar'): number | null => {
+    const isValidNumber = (v: number | null | undefined): v is number => 
+      v !== null && v !== undefined && !isNaN(v);
+    
+    // Try standard PTA frequencies first
+    let values = ptaFreqs
       .map(f => profile.thresholds.find(t => t.frequency === f)?.[ear])
-      .filter((v): v is number => v !== null);
-    return values.length >= 2 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+      .filter(isValidNumber);
+    
+    // If not enough standard frequencies, use all available
+    if (values.length < 2) {
+      values = profile.thresholds
+        .map(t => t[ear])
+        .filter(isValidNumber);
+    }
+    
+    if (values.length === 0) return null;
+    return values.reduce((a, b) => a + b, 0) / values.length;
   };
   
   const olderRight = calcPTA(older, 'rightEar');
