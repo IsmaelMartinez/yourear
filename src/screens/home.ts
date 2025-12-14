@@ -58,6 +58,7 @@ export function renderHome(): void {
       
       ${latest ? renderLatestResult(latest) : ''}
       ${profiles.length > 1 ? renderTestHistory(profiles) : ''}
+      ${renderToolsSection()}
       ${renderAboutSection()}
       ${renderFooter()}
     </main>
@@ -71,6 +72,7 @@ export function renderHome(): void {
   onClick('start-detailed-test', () => navigateTo('calibration', { mode: 'detailed' }));
   onClick('view-latest', () => { if (latest) navigateTo('results', { profile: latest }); });
   onClick('compare-tests', () => navigateTo('comparison'));
+  onClick('tinnitus-matcher', () => navigateTo('tinnitus'));
   
   // Render audiogram preview (wider for better readability)
   if (latest) {
@@ -116,6 +118,18 @@ function renderTestHistory(profiles: HearingProfile[]): string {
           <span aria-hidden="true">📈</span> Compare Tests Over Time
         </button>
       ` : ''}
+    </section>
+  `;
+}
+
+function renderToolsSection(): string {
+  return `
+    <section class="card" aria-labelledby="tools-title">
+      <h2 class="card__title" id="tools-title"><span aria-hidden="true">🛠️</span> Other Tools</h2>
+      <button class="btn btn--secondary" id="tinnitus-matcher" style="width: 100%;">
+        <span aria-hidden="true">🔔</span> Tinnitus Frequency Matcher
+        <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">Identify your tinnitus frequency</span>
+      </button>
     </section>
   `;
 }

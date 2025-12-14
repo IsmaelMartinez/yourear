@@ -12,6 +12,7 @@ import { renderCalibration } from './screens/calibration';
 import { renderTest, cleanupTestScreen } from './screens/test';
 import { renderResults } from './screens/results';
 import { renderComparison } from './screens/comparison';
+import { renderTinnitus, cleanupTinnitusScreen } from './screens/tinnitus';
 import { createProfile, getAllProfiles } from './storage/profile';
 
 // ============================================
@@ -22,10 +23,13 @@ import { createProfile, getAllProfiles } from './storage/profile';
  * Main render function - routes to appropriate screen
  */
 function render(): void {
-  // Clean up test screen handlers when leaving
+  // Clean up screen-specific handlers when leaving
   const { screen } = getState();
   if (screen !== 'test') {
     cleanupTestScreen();
+  }
+  if (screen !== 'tinnitus') {
+    cleanupTinnitusScreen();
   }
   
   switch (screen) {
@@ -43,6 +47,9 @@ function render(): void {
       break;
     case 'comparison':
       renderComparison();
+      break;
+    case 'tinnitus':
+      renderTinnitus();
       break;
   }
 }
