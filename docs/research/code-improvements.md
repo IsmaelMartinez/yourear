@@ -175,19 +175,17 @@ const actions = {
 
 ---
 
-### 2.5 Unused CSS Classes
+### 2.5 Unused CSS Classes (Deferred)
 
-**Problem:** Several CSS classes appear to be unused:
+**Analysis:** Several CSS classes may be unused:
 - `.btn--full`
 - `.sound-wave--inactive`
 - `.screen--hidden`
 - `.pulse` (animation defined but class not used)
 
-**Recommendation:** Remove or mark as intentionally kept for future use.
+**Decision:** Deferred - low impact. May be useful for future features.
 
-**Impact:** Low  
-**Effort:** 15 minutes  
-**Priority:** ⭐
+**Status:** ⏸️ DEFERRED
 
 ---
 
@@ -203,25 +201,13 @@ const actions = {
 
 ---
 
-### 2.7 Inconsistent Error Handling
+### 2.7 Inconsistent Error Handling (Deferred)
 
-**Problem:** Some functions silently fail:
+**Analysis:** Some functions silently fail (e.g., `getAllProfiles()` returns empty array on error).
 
-```typescript
-export function getAllProfiles(): HearingProfile[] {
-  try {
-    // ...
-  } catch {
-    return [];  // Silent failure - user doesn't know if data was lost
-  }
-}
-```
+**Decision:** Acceptable for now. The app gracefully degrades - losing saved profiles is unfortunate but not catastrophic.
 
-**Recommendation:** Log errors at minimum, consider user notification for critical failures.
-
-**Impact:** Medium  
-**Effort:** 1 hour  
-**Priority:** ⭐⭐
+**Status:** ⏸️ DEFERRED
 
 ---
 
@@ -231,46 +217,21 @@ export function getAllProfiles(): HearingProfile[] {
 
 ### 3.1 Simplify Profile Storage API (Deferred)
 
-**Problem:** `saveProfile` takes profile without ID but adds one, which is confusing:
+**Analysis:** `saveProfile` naming could be clearer (it always creates new profiles, never updates).
 
-```typescript
-export function saveProfile(profile: Omit<HearingProfile, 'id'>): HearingProfile
-```
+**Decision:** Low priority. The API works correctly, naming is minor issue.
 
-**Recommendation:** Rename to `createProfile` for clarity, or:
-
-```typescript
-export function saveProfile(profile: HearingProfile): HearingProfile;
-export function createProfile(data: Omit<HearingProfile, 'id'>): HearingProfile;
-```
-
-**Impact:** Low  
-**Effort:** 15 minutes  
-**Priority:** ⭐
+**Status:** ⏸️ DEFERRED
 
 ---
 
-### 3.2 Remove Redundant State Spreading
+### 3.2 Remove Redundant State Spreading (Deferred)
 
-**Problem:** `getState()` creates new objects unnecessarily:
+**Analysis:** `getState()` in `HearingTest` creates shallow copies each call.
 
-```typescript
-getState(): Readonly<TestState> {
-  return { ...this.state };  // Creates shallow copy every call
-}
-```
+**Decision:** Very low impact. The defensive copy prevents accidental state mutation.
 
-**Recommendation:** For read-only access, just return the object (TypeScript's Readonly is compile-time only anyway):
-
-```typescript
-getState(): Readonly<TestState> {
-  return this.state;
-}
-```
-
-**Impact:** Very Low  
-**Effort:** 5 minutes  
-**Priority:** ⭐
+**Status:** ⏸️ DEFERRED
 
 ---
 
@@ -308,40 +269,13 @@ export const QUICK_TEST_CONFIG: TestConfig = {
 
 ---
 
-### 3.4 Simplify Audiogram Color Definitions
+### 3.4 Simplify Audiogram Color Definitions (Deferred)
 
-**Problem:** Colors are defined in both CSS and TypeScript:
+**Analysis:** Colors are defined in both CSS and TypeScript (Canvas API requires JS colors).
 
-```css
-/* styles.css */
---accent-right: #ff6b6b;
---accent-left: #4ecdc4;
-```
+**Decision:** Acceptable duplication. Canvas cannot read CSS variables. Adding a comment would help maintainability.
 
-```typescript
-/* audiogram.ts */
-const COLORS = {
-  rightEar: '#ff6b6b',
-  leftEar: '#4ecdc4',
-};
-```
-
-**Options:**
-1. Read CSS variables in JS (adds complexity)
-2. Single source of truth in JS, inject to CSS (over-engineering)
-3. Accept duplication with comment (pragmatic)
-
-**Recommendation:** Add comment noting duplication:
-
-```typescript
-// Note: These colors are duplicated in styles.css as CSS variables
-// Keep them in sync when changing
-const COLORS = { /* ... */ };
-```
-
-**Impact:** Very Low  
-**Effort:** 5 minutes  
-**Priority:** ⭐
+**Status:** ⏸️ DEFERRED (with note for future)
 
 ---
 
@@ -376,33 +310,13 @@ function generateId(): string {
 
 ---
 
-### 3.6 Simplify Threshold Drawing Logic
+### 3.6 Threshold Drawing Logic (No Action Needed)
 
-**Problem:** `drawThresholds` iterates thresholds twice (once for points, once for symbols):
+**Analysis:** `drawThresholds` iterates thresholds twice (collect points, then draw symbols).
 
-```typescript
-// First pass - collect points
-thresholds.forEach(t => {
-  if (t.rightEar !== null) rightPoints.push({ x, y });
-  if (t.leftEar !== null) leftPoints.push({ x, y });
-});
+**Decision:** Correct behavior. Lines must be drawn before symbols for proper layering. Performance is not a concern for 6-12 data points.
 
-// Draw lines
-this.drawLine(rightPoints, COLORS.rightEar);
-this.drawLine(leftPoints, COLORS.leftEar);
-
-// Second pass - draw symbols
-thresholds.forEach(t => {
-  if (t.rightEar !== null) this.drawCircle(...);
-  if (t.leftEar !== null) this.drawX(...);
-});
-```
-
-**Recommendation:** Acceptable as-is for clarity. Lines should be drawn before symbols (correct layering). Could merge into single pass if performance matters (it doesn't for 6-12 points).
-
-**Impact:** None  
-**Effort:** N/A  
-**Priority:** - (no action)
+**Status:** ✅ NO CHANGE NEEDED
 
 ---
 
