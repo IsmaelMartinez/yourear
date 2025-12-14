@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#05050a"/>
+  <g transform="translate(128, 80)">
+    <!-- Ear shape -->
+    <path d="M180 80c0-40-32-72-72-72S36 40 36 80c0 24 12 46 30 60-12 20-18 42-18 64 0 66 54 120 120 120 12 0 24 0 36-4" 
+          fill="none" 
+          stroke="#7c6aef" 
+          stroke-width="24" 
+          stroke-linecap="round"/>
+    <!-- Inner ear detail -->
+    <path d="M120 100c0-22-18-40-40-40s-40 18-40 40c0 16 8 28 20 36" 
+          fill="none" 
+          stroke="#4ecdc4" 
+          stroke-width="16" 
+          stroke-linecap="round"/>
+    <!-- Sound waves -->
+    <path d="M200 80c20 24 32 56 32 92s-12 68-32 92" 
+          fill="none" 
+          stroke="#ff6b6b" 
+          stroke-width="16" 
+          stroke-linecap="round"
+          opacity="0.8"/>
+    <path d="M232 56c28 32 44 76 44 124s-16 92-44 124" 
+          fill="none" 
+          stroke="#ff6b6b" 
+          stroke-width="16" 
+          stroke-linecap="round"
+          opacity="0.5"/>
+  </g>
+</svg>
+
