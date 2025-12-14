@@ -7,40 +7,21 @@ Prioritized list of potential features based on value vs implementation effort.
 
 ## 🎯 High Priority (High Value, Low-Medium Effort)
 
-### 1. PDF Export
+### 1. ~~PDF Export~~ ✅ IMPLEMENTED
 **Value:** High | **Effort:** ~2-3 hours
 
 Export audiogram and summary as a PDF to share with healthcare providers.
 
-**Technical approach:**
-- Use `html2canvas` + `jsPDF` or `@react-pdf/renderer`
-- Include audiogram image, thresholds table, summary text
-- Add disclaimer and date
-
-**Resources:**
-- [jsPDF documentation](https://github.com/parallax/jsPDF)
-- [html2canvas](https://html2canvas.hertzen.com/)
+**Implementation:** Using jsPDF to generate PDFs with audiogram image, thresholds table, and summary.
 
 ---
 
-### 2. Profile Comparison (Trend View)
+### 2. ~~Profile Comparison (Trend View)~~ ✅ IMPLEMENTED
 **Value:** High | **Effort:** ~3-4 hours
 
 Overlay multiple audiograms to track hearing changes over time.
 
-**Technical approach:**
-- Select 2-3 profiles from history
-- Draw on same audiogram with different opacity/style
-- Show delta values (e.g., "+5 dB at 4kHz since last test")
-
-**UI concept:**
-```
-[Profile 1: Jan 2024] ●━━━━━━━━━━━
-[Profile 2: Jun 2024] ●━━━━━━━━━━━ (selected)
-[Profile 3: Dec 2024] ●━━━━━━━━━━━ (selected)
-
-[Compare Selected]
-```
+**Implementation:** ComparisonAudiogram class with selection UI for 2-5 profiles, PTA change summary between oldest and newest tests.
 
 ---
 
@@ -214,12 +195,12 @@ Internationalization for broader reach.
 
 ## Implementation Order Recommendation
 
-| Phase | Features | Effort |
-|-------|----------|--------|
-| **Phase 1** | PDF Export, Profile Comparison | ~6 hours |
-| **Phase 2** | PWA Support, Extended Frequencies | ~4 hours |
-| **Phase 3** | Speech-in-Noise, Tinnitus Matcher | ~14 hours |
-| **Phase 4** | Hearing Compensation (if demand) | ~20 hours |
+| Phase | Features | Effort | Status |
+|-------|----------|--------|--------|
+| **Phase 1** | PDF Export, Profile Comparison | ~6 hours | ✅ DONE |
+| **Phase 2** | PWA Support, Extended Frequencies | ~4 hours | Pending |
+| **Phase 3** | Speech-in-Noise, Tinnitus Matcher | ~14 hours | Pending |
+| **Phase 4** | Hearing Compensation (if demand) | ~20 hours | Pending |
 
 ---
 
