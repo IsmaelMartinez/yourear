@@ -15,6 +15,7 @@ docs/
 │   └── 007-accessibility.md
 └── research/           # Research & Future Planning
     ├── future-features.md
+    ├── code-improvements.md  # Technical debt analysis (✅ completed)
     ├── hardware-limitations.md
     └── clinical-accuracy.md
 ```
@@ -44,6 +45,7 @@ Research documents capture analysis and planning for future features.
 | Document | Description |
 |----------|-------------|
 | [Future Features](research/future-features.md) | Prioritized roadmap of potential features |
+| [Code Improvements](research/code-improvements.md) | Technical debt, refactoring opportunities, and action plan |
 | [Hardware Limitations](research/hardware-limitations.md) | Physical constraints of consumer audio hardware |
 | [Clinical Accuracy](research/clinical-accuracy.md) | Comparison with professional audiometry |
 

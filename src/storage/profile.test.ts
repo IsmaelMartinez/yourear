@@ -56,7 +56,8 @@ describe('profile storage', () => {
       });
 
       expect(profile1.id).not.toBe(profile2.id);
-      expect(profile1.id).toMatch(/^profile_\d+_/);
+      // UUID v4 format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+      expect(profile1.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     });
 
     it('persists to localStorage', () => {

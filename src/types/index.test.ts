@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyHearingLoss, TEST_FREQUENCIES, DEFAULT_TEST_CONFIG, QUICK_TEST_CONFIG } from './index';
+import { classifyHearingLoss, TEST_FREQUENCIES, DEFAULT_TEST_CONFIG, QUICK_TEST_CONFIG, formatFrequency } from './index';
 
 describe('classifyHearingLoss', () => {
   it('classifies normal hearing (≤20 dB)', () => {
@@ -78,6 +78,43 @@ describe('QUICK_TEST_CONFIG', () => {
     expect(QUICK_TEST_CONFIG.stepUp).toBe(DEFAULT_TEST_CONFIG.stepUp);
     expect(QUICK_TEST_CONFIG.stepDown).toBe(DEFAULT_TEST_CONFIG.stepDown);
     expect(QUICK_TEST_CONFIG.startLevel).toBe(DEFAULT_TEST_CONFIG.startLevel);
+  });
+});
+
+describe('formatFrequency', () => {
+  describe('short format (default)', () => {
+    it('formats frequencies below 1000 Hz as plain numbers', () => {
+      expect(formatFrequency(250)).toBe('250');
+      expect(formatFrequency(500)).toBe('500');
+    });
+
+    it('formats frequencies at or above 1000 Hz with k suffix', () => {
+      expect(formatFrequency(1000)).toBe('1k');
+      expect(formatFrequency(2000)).toBe('2k');
+      expect(formatFrequency(4000)).toBe('4k');
+      expect(formatFrequency(8000)).toBe('8k');
+    });
+  });
+
+  describe('full format', () => {
+    it('returns plain numbers for all frequencies', () => {
+      expect(formatFrequency(250, 'full')).toBe('250');
+      expect(formatFrequency(1000, 'full')).toBe('1000');
+      expect(formatFrequency(8000, 'full')).toBe('8000');
+    });
+  });
+
+  describe('spoken format', () => {
+    it('formats frequencies below 1000 Hz with hertz', () => {
+      expect(formatFrequency(250, 'spoken')).toBe('250 hertz');
+      expect(formatFrequency(500, 'spoken')).toBe('500 hertz');
+    });
+
+    it('formats frequencies at or above 1000 Hz with kilohertz', () => {
+      expect(formatFrequency(1000, 'spoken')).toBe('1 kilohertz');
+      expect(formatFrequency(4000, 'spoken')).toBe('4 kilohertz');
+      expect(formatFrequency(8000, 'spoken')).toBe('8 kilohertz');
+    });
   });
 });
 

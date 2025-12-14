@@ -47,6 +47,14 @@ npm run dev
 
 The app will open at `http://localhost:3000`
 
+#### Demo Mode
+
+To see the app with sample data, append `?demo=true` to the URL:
+```
+http://localhost:3000/?demo=true
+```
+This loads a sample hearing profile for testing the UI without running a full test.
+
 ### Building for Production
 
 ```bash
@@ -118,22 +126,40 @@ No heavy frameworks - just clean, simple code.
 ```
 yourear/
 ├── src/
-│   ├── main.ts              # Application entry point
-│   ├── styles.css           # All styles
+│   ├── main.ts               # Application entry point & router
+│   ├── styles.css            # All styles (CSS variables, components)
+│   ├── screens/              # UI screens (one file per screen)
+│   │   ├── home.ts           # Landing page with test options
+│   │   ├── calibration.ts    # Age input & headphone testing
+│   │   ├── test.ts           # Active hearing test
+│   │   └── results.ts        # Audiogram & summary display
 │   ├── audio/
-│   │   ├── context.ts       # AudioContext management
-│   │   ├── tone-generator.ts # Pure tone synthesis
-│   │   └── hearing-test.ts  # Test logic
+│   │   ├── tone-generator.ts # Pure tone synthesis (Web Audio API)
+│   │   ├── hearing-test.ts   # Test logic (Hughson-Westlake procedure)
+│   │   └── hearing-test.test.ts
 │   ├── ui/
-│   │   └── audiogram.ts     # Canvas audiogram
+│   │   ├── audiogram.ts      # Canvas audiogram visualization
+│   │   └── audiogram.test.ts
 │   ├── storage/
-│   │   └── profile.ts       # LocalStorage management
+│   │   ├── profile.ts        # LocalStorage management
+│   │   └── profile.test.ts
+│   ├── state/
+│   │   └── app-state.ts      # Centralized state management
+│   ├── services/
+│   │   └── test-runner.ts    # Test lifecycle management
+│   ├── utils/
+│   │   └── dom.ts            # DOM helper utilities
 │   └── types/
-│       └── index.ts         # TypeScript interfaces
+│       ├── index.ts          # TypeScript interfaces & utilities
+│       └── index.test.ts
+├── docs/
+│   ├── adr/                  # Architecture Decision Records
+│   └── research/             # Research & future planning
 ├── index.html
 ├── package.json
 ├── tsconfig.json
-└── vite.config.ts
+├── vite.config.ts
+└── vitest.config.ts
 ```
 
 ## 🤝 Contributing

@@ -7,7 +7,7 @@ import { HearingProfile } from '../types';
 const STORAGE_KEY = 'yourear_profiles';
 
 function generateId(): string {
-  return `profile_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return crypto.randomUUID();
 }
 
 export function getAllProfiles(): HearingProfile[] {

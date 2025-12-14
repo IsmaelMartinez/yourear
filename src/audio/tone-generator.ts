@@ -1,13 +1,31 @@
 /**
  * Pure tone generator for audiometry
+ * 
+ * Uses the Web Audio API to generate precise sine wave tones
+ * at specific frequencies for hearing threshold testing.
  */
 
-// AudioContext singleton
+// AudioContext singleton - created on first use to comply with autoplay policies
 let audioContext: AudioContext | null = null;
+
+/** Error thrown when audio cannot be initialized */
+export class AudioInitError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = 'AudioInitError';
+  }
+}
 
 function getAudioContext(): AudioContext {
   if (!audioContext) {
-    audioContext = new AudioContext();
+    try {
+      audioContext = new AudioContext();
+    } catch (error) {
+      throw new AudioInitError(
+        'Could not initialize audio. Please ensure your browser supports Web Audio API.',
+        error
+      );
+    }
   }
   return audioContext;
 }
@@ -15,7 +33,14 @@ function getAudioContext(): AudioContext {
 async function ensureRunning(): Promise<AudioContext> {
   const ctx = getAudioContext();
   if (ctx.state === 'suspended') {
-    await ctx.resume();
+    try {
+      await ctx.resume();
+    } catch (error) {
+      throw new AudioInitError(
+        'Could not resume audio context. Please interact with the page and try again.',
+        error
+      );
+    }
   }
   return ctx;
 }
@@ -32,15 +57,40 @@ export interface ToneOptions {
   channel: 'left' | 'right' | 'both';
 }
 
+/**
+ * Convert decibels to linear gain value
+ * @param db - Decibel value
+ * @returns Linear gain multiplier (0-1 range for negative dB)
+ */
 function dbToGain(db: number): number {
   return Math.pow(10, db / 20);
 }
 
-// Reference: 0 dB HL maps to -60 dB gain (very quiet)
-const REFERENCE_DB = -60;
+/**
+ * Reference level: 0 dB HL maps to -60 dB relative to full scale (dBFS).
+ * 
+ * This provides sufficient headroom:
+ * - At 0 dB HL: output is very quiet (-60 dBFS)
+ * - At 90 dB HL: output is moderate (-60 + 90 = -30 dBFS, clamped to 0)
+ * 
+ * Note: This is an arbitrary reference since consumer hardware isn't calibrated.
+ * Results are relative, not absolute SPL.
+ */
+const REFERENCE_DB_FS = -60;
 
+/** Minimum gain to prevent complete silence (for safety) */
+const MIN_GAIN_DB = -80;
+
+/** Maximum gain to prevent clipping */
+const MAX_GAIN_DB = 0;
+
+/**
+ * Convert hearing level (dB HL) to Web Audio gain value
+ * @param dbHL - Hearing level in decibels (0-90 typical range)
+ * @returns Linear gain value for GainNode
+ */
 function hearingLevelToGain(dbHL: number): number {
-  const gainDb = Math.max(-80, Math.min(0, REFERENCE_DB + dbHL));
+  const gainDb = Math.max(MIN_GAIN_DB, Math.min(MAX_GAIN_DB, REFERENCE_DB_FS + dbHL));
   return dbToGain(gainDb);
 }
 
@@ -79,14 +129,14 @@ export async function playTone(options: ToneOptions): Promise<void> {
   
   oscillator.connect(gainNode).connect(panner).connect(ctx.destination);
   
-  // Smooth envelope to avoid clicks
+  // Smooth envelope to avoid audible clicks at tone start/end
   const now = ctx.currentTime;
-  const rampTime = 0.02;
+  const RAMP_TIME_SEC = 0.02; // 20ms fade in/out - fast enough to not affect perception
   const durationSec = duration / 1000;
   
   gainNode.gain.setValueAtTime(0, now);
-  gainNode.gain.linearRampToValueAtTime(targetGain, now + rampTime);
-  gainNode.gain.setValueAtTime(targetGain, now + durationSec - rampTime);
+  gainNode.gain.linearRampToValueAtTime(targetGain, now + RAMP_TIME_SEC);
+  gainNode.gain.setValueAtTime(targetGain, now + durationSec - RAMP_TIME_SEC);
   gainNode.gain.linearRampToValueAtTime(0, now + durationSec);
   
   activeOscillator = oscillator;

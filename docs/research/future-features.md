@@ -214,10 +214,19 @@ Internationalization for broader reach.
 
 ## Implementation Order Recommendation
 
-| Phase | Features | Total Effort |
-|-------|----------|--------------|
-| **Phase 1** | PDF Export, Profile Comparison | ~6 hours |
-| **Phase 2** | PWA Support, Extended Frequencies | ~4 hours |
-| **Phase 3** | Speech-in-Noise, Tinnitus Matcher | ~14 hours |
-| **Phase 4** | Hearing Compensation (if demand) | ~20 hours |
+| Phase | Features | Total Effort | Status |
+|-------|----------|--------------|--------|
+| **Phase 0** | [Code Improvements](./code-improvements.md) - Technical debt & refactoring | ~13-18 hours | ✅ **DONE** |
+| **Phase 1** | PDF Export, Profile Comparison | ~6 hours | Pending |
+| **Phase 2** | PWA Support, Extended Frequencies | ~4 hours | Pending |
+| **Phase 3** | Speech-in-Noise, Tinnitus Matcher | ~14 hours | Pending |
+| **Phase 4** | Hearing Compensation (if demand) | ~20 hours | Pending |
+
+---
+
+## 🔧 Related Documentation
+
+- **[Code Improvements](./code-improvements.md)** - Technical debt analysis with detailed action plan
+- **[Hardware Limitations](./hardware-limitations.md)** - Physical constraints of consumer audio
+- **[Clinical Accuracy](./clinical-accuracy.md)** - Comparison with professional audiometry
 

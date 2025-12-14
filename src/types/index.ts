@@ -54,15 +54,28 @@ export const DEFAULT_TEST_CONFIG: TestConfig = {
 export const QUICK_TEST_FREQUENCIES = [1000, 4000, 8000] as const;
 
 export const QUICK_TEST_CONFIG: TestConfig = {
+  ...DEFAULT_TEST_CONFIG,
   frequencies: QUICK_TEST_FREQUENCIES,
-  startLevel: 40,
-  minLevel: -10,
-  maxLevel: 90,
-  stepUp: 5,
-  stepDown: 10,
-  toneDuration: 1000,    // Shorter tones
-  responseDuration: 2500, // Faster response window
+  toneDuration: 1000,     // Shorter tones (vs 1500ms in full test)
+  responseDuration: 2500, // Faster response window (vs 3000ms)
 };
+
+/**
+ * Format a frequency value for display
+ * @param hz - Frequency in Hertz
+ * @param style - 'short' for "4k", 'full' for "4000", 'spoken' for "4 kilohertz"
+ */
+export function formatFrequency(hz: number, style: 'short' | 'full' | 'spoken' = 'short'): string {
+  switch (style) {
+    case 'spoken':
+      return hz >= 1000 ? `${hz / 1000} kilohertz` : `${hz} hertz`;
+    case 'full':
+      return String(hz);
+    case 'short':
+    default:
+      return hz >= 1000 ? `${hz / 1000}k` : String(hz);
+  }
+}
 
 export type HearingLossGrade = 
   | 'normal' 

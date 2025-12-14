@@ -664,6 +664,65 @@ body::before {
   animation: pulse 1.5s ease-in-out infinite;
 }
 
+/* Utility classes for repeated inline styles */
+.text-secondary-lg {
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.text-muted-sm {
+  color: var(--text-muted);
+  margin-top: var(--spacing-md);
+  font-size: 0.9rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-md {
+  margin-top: var(--spacing-md);
+}
+
+.flex-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.flex-buttons > * {
+  flex: 1;
+  min-width: 200px;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+/* Error message styling */
+.error-message {
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
+  text-align: center;
+}
+
+.error-message__title {
+  color: var(--accent-right);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-md);
+}
+
+.error-message__text {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   #app {

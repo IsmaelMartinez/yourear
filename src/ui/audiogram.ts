@@ -3,7 +3,7 @@
  * Standard conventions: O = Right ear, X = Left ear
  */
 
-import { HearingProfile, HearingThreshold, classifyHearingLoss, TEST_FREQUENCIES, getExpectedThresholds } from '../types';
+import { HearingProfile, HearingThreshold, classifyHearingLoss, TEST_FREQUENCIES, getExpectedThresholds, formatFrequency } from '../types';
 
 interface Colors {
   background: string;
@@ -177,8 +177,7 @@ export class Audiogram {
     ctx.textAlign = 'center';
     
     FREQUENCIES.forEach(freq => {
-      const label = freq >= 1000 ? `${freq / 1000}k` : String(freq);
-      ctx.fillText(label, this.freqToX(freq), height - PADDING.bottom + 20);
+      ctx.fillText(formatFrequency(freq, 'short'), this.freqToX(freq), height - PADDING.bottom + 20);
     });
     
     ctx.font = '13px "DM Sans", sans-serif';

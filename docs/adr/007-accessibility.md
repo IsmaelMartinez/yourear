@@ -17,19 +17,31 @@ Implement comprehensive accessibility features:
 ## Implementation
 
 ### Screen Reader Support
+Located in `src/utils/dom.ts`:
 ```typescript
-function announce(message: string, priority: 'polite' | 'assertive' = 'polite'): void {
-  announcer.setAttribute('aria-live', priority);
-  announcer.textContent = message;
+export function announce(message: string, priority: 'polite' | 'assertive' = 'polite'): void {
+  if (announcer) {
+    announcer.setAttribute('aria-live', priority);
+    announcer.textContent = message;
+    setTimeout(() => { announcer.textContent = ''; }, 1000);
+  }
 }
 ```
 
 ### Audiogram Description
+Located in `src/screens/results.ts`:
 ```typescript
 function generateAudiogramDescription(profile: HearingProfile): string {
-  return profile.thresholds.map(t => 
-    `At ${t.frequency} hertz: Right ear ${t.rightEar} decibels, Left ear ${t.leftEar} decibels`
-  ).join('. ');
+  const lines: string[] = ['Audiogram results:'];
+  profile.thresholds.forEach(t => {
+    const parts: string[] = [];
+    if (t.rightEar !== null) parts.push(`Right ear: ${t.rightEar} decibels`);
+    if (t.leftEar !== null) parts.push(`Left ear: ${t.leftEar} decibels`);
+    if (parts.length) {
+      lines.push(`At ${formatFrequency(t.frequency, 'spoken')}: ${parts.join(', ')}.`);
+    }
+  });
+  return lines.join(' ');
 }
 ```
 
