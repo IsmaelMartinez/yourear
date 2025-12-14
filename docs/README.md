@@ -40,12 +40,12 @@ ADRs document significant technical decisions made during development.
 
 ## 🔬 Research Documents
 
-Research documents capture analysis and planning for future features.
+Research documents capture analysis and planning.
 
 | Document | Description |
 |----------|-------------|
-| [Future Features](research/future-features.md) | Prioritized roadmap of potential features |
-| [Code Improvements](research/code-improvements.md) | Technical debt, refactoring opportunities, and action plan |
+| [Future Features](research/future-features.md) | Feature roadmap - many now implemented ✅ |
+| [Code Improvements](research/code-improvements.md) | Refactoring summary ✅ completed |
 | [Hardware Limitations](research/hardware-limitations.md) | Physical constraints of consumer audio hardware |
 | [Clinical Accuracy](research/clinical-accuracy.md) | Comparison with professional audiometry |
 
