@@ -11,6 +11,7 @@ export interface HearingThreshold {
 export interface HearingProfile {
   id: string;
   name: string;
+  age?: number;
   createdAt: Date;
   updatedAt: Date;
   thresholds: HearingThreshold[];
@@ -49,6 +50,20 @@ export const DEFAULT_TEST_CONFIG: TestConfig = {
   responseDuration: 3000,
 };
 
+// Quick test: 3 key frequencies, faster timing (~2 minutes)
+export const QUICK_TEST_FREQUENCIES = [1000, 4000, 8000] as const;
+
+export const QUICK_TEST_CONFIG: TestConfig = {
+  frequencies: QUICK_TEST_FREQUENCIES,
+  startLevel: 40,
+  minLevel: -10,
+  maxLevel: 90,
+  stepUp: 5,
+  stepDown: 10,
+  toneDuration: 1000,    // Shorter tones
+  responseDuration: 2500, // Faster response window
+};
+
 export type HearingLossGrade = 
   | 'normal' 
   | 'slight' 
@@ -66,4 +81,24 @@ export function classifyHearingLoss(thresholdDb: number): HearingLossGrade {
   if (thresholdDb <= 70) return 'moderately-severe';
   if (thresholdDb <= 90) return 'severe';
   return 'profound';
+}
+
+/**
+ * Age-based expected hearing thresholds (median values)
+ * Based on ISO 7029 standard for otologically normal persons
+ * Values are in dB HL
+ */
+export function getExpectedThresholds(age: number): Record<number, { median: number; p90: number }> {
+  // Simplified model based on ISO 7029 for males
+  // p90 = 90th percentile (worse than 90% of population)
+  const ageOffset = Math.max(0, age - 20);
+  
+  return {
+    250:  { median: Math.round(ageOffset * 0.1), p90: Math.round(ageOffset * 0.2 + 10) },
+    500:  { median: Math.round(ageOffset * 0.15), p90: Math.round(ageOffset * 0.25 + 10) },
+    1000: { median: Math.round(ageOffset * 0.2), p90: Math.round(ageOffset * 0.35 + 10) },
+    2000: { median: Math.round(ageOffset * 0.35), p90: Math.round(ageOffset * 0.55 + 10) },
+    4000: { median: Math.round(ageOffset * 0.7), p90: Math.round(ageOffset * 1.1 + 15) },
+    8000: { median: Math.round(ageOffset * 1.0), p90: Math.round(ageOffset * 1.5 + 20) },
+  };
 }

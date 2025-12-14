@@ -7,16 +7,48 @@ import { HearingTest, TestEventType } from './audio/hearing-test';
 import { playCalibrationTone, stopTone } from './audio/tone-generator';
 import { Audiogram, generateSummary } from './ui/audiogram';
 import { saveProfile, getAllProfiles, getLatestProfile } from './storage/profile';
-import { HearingProfile } from './types';
+import { HearingProfile, QUICK_TEST_CONFIG } from './types';
 
 let hearingTest: HearingTest | null = null;
 let currentScreen: 'home' | 'calibration' | 'test' | 'results' = 'home';
 let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+let userAge: number | undefined;
+let testMode: 'full' | 'quick' = 'full';
 
 const app = document.getElementById('app')!;
 
+// Check for demo mode or seed data
+function checkUrlParams(): void {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('demo') === 'true') {
+    seedDemoProfile();
+  }
+}
+
+// Seed demo profile for testing (based on your results!)
+function seedDemoProfile(): void {
+  const existing = getAllProfiles();
+  const hasDemo = existing.some(p => p.name?.includes('Demo'));
+  
+  if (!hasDemo) {
+    saveProfile({
+      name: 'Demo - Age 43',
+      age: 43,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      thresholds: [
+        { frequency: 250, rightEar: 5, leftEar: 10 },
+        { frequency: 500, rightEar: 10, leftEar: 10 },
+        { frequency: 1000, rightEar: 10, leftEar: 0 },
+        { frequency: 2000, rightEar: 15, leftEar: 25 },
+        { frequency: 4000, rightEar: 35, leftEar: 25 },
+        { frequency: 8000, rightEar: 30, leftEar: 45 },
+      ],
+    });
+  }
+}
+
 function render(): void {
-  // Cleanup keyboard handler
   if (keydownHandler) {
     document.removeEventListener('keydown', keydownHandler);
     keydownHandler = null;
@@ -56,9 +88,16 @@ function renderHome(): void {
           </ul>
         </div>
         
-        <button class="btn btn--primary btn--large btn--full" id="start-test">
-          🎵 Start Hearing Test
-        </button>
+        <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+          <button class="btn btn--primary btn--large" id="start-full-test" style="flex: 1; min-width: 200px;">
+            🎵 Full Test
+            <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">6 frequencies · ~8 min</span>
+          </button>
+          <button class="btn btn--secondary btn--large" id="start-quick-test" style="flex: 1; min-width: 200px;">
+            ⚡ Quick Test
+            <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">3 frequencies · ~2 min</span>
+          </button>
+        </div>
         
         <div class="disclaimer">
           ⚠️ <strong>Medical Disclaimer:</strong> This is a self-assessment tool for curiosity and general awareness only. 
@@ -68,7 +107,7 @@ function renderHome(): void {
       
       ${latest ? `
         <div class="card">
-          <h2 class="card__title">📊 Your Latest Result</h2>
+          <h2 class="card__title">📊 Your Latest Result${latest.age ? ` (Age ${latest.age})` : ''}</h2>
           <div id="audiogram-preview"></div>
           <p style="color: var(--text-muted); margin-top: var(--spacing-md); font-size: 0.9rem;">
             Tested on ${latest.createdAt.toLocaleDateString()}
@@ -85,7 +124,7 @@ function renderHome(): void {
           <div class="profiles__list">
             ${profiles.slice(0, 5).map(p => `
               <div class="profile-item" data-id="${p.id}">
-                <span class="profile-item__name">${p.name || 'Hearing Test'}</span>
+                <span class="profile-item__name">${p.name || 'Hearing Test'}${p.age ? ` (${p.age}y)` : ''}</span>
                 <span class="profile-item__date">${p.createdAt.toLocaleDateString()}</span>
               </div>
             `).join('')}
@@ -113,7 +152,14 @@ function renderHome(): void {
     </div>
   `;
   
-  document.getElementById('start-test')?.addEventListener('click', () => {
+  document.getElementById('start-full-test')?.addEventListener('click', () => {
+    testMode = 'full';
+    currentScreen = 'calibration';
+    render();
+  });
+  
+  document.getElementById('start-quick-test')?.addEventListener('click', () => {
+    testMode = 'quick';
     currentScreen = 'calibration';
     render();
   });
@@ -136,20 +182,48 @@ function renderHome(): void {
 }
 
 function renderCalibration(): void {
+  const isQuick = testMode === 'quick';
+  
   app.innerHTML = `
     <div class="screen">
       <header class="header">
-        <div class="header__logo">🔊</div>
-        <h1 class="header__title">Calibration</h1>
-        <p class="header__subtitle">Let's make sure your audio is set up correctly</p>
+        <div class="header__logo">${isQuick ? '⚡' : '🔊'}</div>
+        <h1 class="header__title">${isQuick ? 'Quick Test' : 'Full Test'} Setup</h1>
+        <p class="header__subtitle">${isQuick ? '3 frequencies · ~2 minutes' : '6 frequencies · ~8 minutes'}</p>
       </header>
       
       <div class="card card--glow">
         <div class="calibration">
-          <h2 class="card__title" style="justify-content: center;">Test your headphones</h2>
-          <p style="color: var(--text-secondary);">
-            Click each button to play a test tone. Adjust your device volume until you can 
-            hear both tones clearly at a comfortable level.
+          <h2 class="card__title" style="justify-content: center;">👤 Your Age</h2>
+          <p style="color: var(--text-secondary); text-align: center;">
+            Enter your age to compare your results with expected values for your age group.
+          </p>
+          
+          <div style="display: flex; justify-content: center; margin: var(--spacing-lg) 0;">
+            <input type="number" id="age-input" min="5" max="120" value="${userAge || ''}" 
+              placeholder="Enter age" 
+              style="
+                width: 120px;
+                padding: var(--spacing-md);
+                font-size: 1.5rem;
+                text-align: center;
+                background: var(--bg-tertiary);
+                border: 2px solid var(--border-color);
+                border-radius: var(--radius-md);
+                color: var(--text-primary);
+                font-family: var(--font-mono);
+              "
+            />
+            <span style="padding: var(--spacing-md); font-size: 1.2rem; color: var(--text-muted);">years</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="calibration">
+          <h2 class="card__title" style="justify-content: center;">🎧 Test Your Headphones</h2>
+          <p style="color: var(--text-secondary); text-align: center;">
+            Click each button to play a test tone. Adjust your volume until comfortable.
           </p>
           
           <div class="calibration__ear-buttons">
@@ -161,25 +235,38 @@ function renderCalibration(): void {
             </button>
           </div>
           
-          <p class="calibration__tip">💡 The test will present tones to each ear separately. Make sure both sides work!</p>
-          
-          <div style="margin-top: var(--spacing-xl); display: flex; gap: var(--spacing-md); justify-content: center;">
-            <button class="btn btn--secondary" id="back-home">← Back</button>
-            <button class="btn btn--primary btn--large" id="begin-test">I'm ready - Begin Test →</button>
-          </div>
+          <p class="calibration__tip">💡 Make sure both ears can hear the test tones!</p>
         </div>
+      </div>
+      
+      <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+        <button class="btn btn--secondary" id="back-home" style="flex: 1;">← Back</button>
+        <button class="btn btn--primary btn--large" id="begin-test" style="flex: 2;">I'm ready - Begin Test →</button>
       </div>
     </div>
   `;
   
+  const ageInput = document.getElementById('age-input') as HTMLInputElement;
+  ageInput?.addEventListener('change', () => {
+    const val = parseInt(ageInput.value);
+    userAge = (val >= 5 && val <= 120) ? val : undefined;
+  });
+  
   document.getElementById('test-right')?.addEventListener('click', () => playCalibrationTone('right'));
   document.getElementById('test-left')?.addEventListener('click', () => playCalibrationTone('left'));
   document.getElementById('back-home')?.addEventListener('click', () => { stopTone(); currentScreen = 'home'; render(); });
-  document.getElementById('begin-test')?.addEventListener('click', () => { stopTone(); startTest(); });
+  document.getElementById('begin-test')?.addEventListener('click', () => { 
+    stopTone(); 
+    // Grab age value before starting
+    const val = parseInt(ageInput?.value || '');
+    userAge = (val >= 5 && val <= 120) ? val : undefined;
+    startTest(); 
+  });
 }
 
 function startTest(): void {
-  hearingTest = new HearingTest();
+  const config = testMode === 'quick' ? QUICK_TEST_CONFIG : undefined;
+  hearingTest = new HearingTest(config);
   hearingTest.on((event: TestEventType) => {
     if (event === 'stateChange') render();
     if (event === 'testComplete') handleTestComplete();
@@ -197,10 +284,12 @@ function renderTest(): void {
   const freqLabel = state.currentFrequency >= 1000 ? `${state.currentFrequency / 1000}` : String(state.currentFrequency);
   const freqUnit = state.currentFrequency >= 1000 ? 'kHz' : 'Hz';
   
+  const isQuick = testMode === 'quick';
+  
   app.innerHTML = `
     <div class="screen">
       <header class="header" style="margin-bottom: var(--spacing-lg);">
-        <h1 class="header__title" style="font-size: 1.5rem;">Hearing Test</h1>
+        <h1 class="header__title" style="font-size: 1.5rem;">${isQuick ? '⚡ Quick' : '🎵 Full'} Test</h1>
       </header>
       
       <div class="card card--glow">
@@ -270,7 +359,12 @@ function renderTest(): void {
 function handleTestComplete(): void {
   const results = hearingTest?.getResults();
   if (!results) return;
-  showResults(saveProfile({ ...results, name: `Hearing Test - ${new Date().toLocaleDateString()}` }));
+  const testLabel = testMode === 'quick' ? 'Quick Test' : 'Full Test';
+  showResults(saveProfile({ 
+    ...results, 
+    name: `${testLabel} - ${new Date().toLocaleDateString()}`,
+    age: userAge,
+  }));
 }
 
 function showResults(profile: HearingProfile): void {
@@ -287,12 +381,18 @@ function renderResults(profile?: HearingProfile): void {
       <header class="header">
         <div class="header__logo">📊</div>
         <h1 class="header__title">Your Results</h1>
-        <p class="header__subtitle">${displayProfile.name || 'Hearing Assessment'} · ${displayProfile.createdAt.toLocaleDateString()}</p>
+        <p class="header__subtitle">${displayProfile.name || 'Hearing Assessment'}${displayProfile.age ? ` · Age ${displayProfile.age}` : ''}</p>
       </header>
       
       <div class="card card--glow">
         <h2 class="card__title">🎼 Your Audiogram</h2>
         <div class="audiogram-container" id="audiogram"></div>
+        ${displayProfile.age ? `
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: var(--spacing-md); text-align: center;">
+            <span style="color: var(--accent-warning);">- - -</span> Yellow dashed line = expected median for age ${displayProfile.age}<br>
+            <span style="background: rgba(251, 191, 36, 0.3); padding: 2px 8px; border-radius: 4px;">Shaded area</span> = typical range for your age
+          </p>
+        ` : ''}
       </div>
       
       <div class="card">
@@ -304,7 +404,10 @@ function renderResults(profile?: HearingProfile): void {
         <h2 class="card__title">📖 Understanding Your Results</h2>
         <div style="color: var(--text-secondary); line-height: 1.8;">
           <p><strong>The audiogram</strong> shows your hearing thresholds - the quietest sounds you can hear at each frequency. Lower values (toward the top) mean better hearing.</p>
-          <p style="margin-top: var(--spacing-md);"><strong>Normal hearing</strong> is generally considered to be thresholds of 20 dB HL or better (shown in the tinted area).</p>
+          <p style="margin-top: var(--spacing-md);"><strong>Normal hearing</strong> is generally considered to be thresholds of 20 dB HL or better (shown in the teal tinted area).</p>
+          ${displayProfile.age ? `
+            <p style="margin-top: var(--spacing-md);"><strong>Age comparison</strong>: The yellow area shows the typical range for people your age. If your results are within or above this area, your hearing is normal for your age.</p>
+          ` : ''}
           <p style="margin-top: var(--spacing-md);"><strong>Symbols:</strong> ◯ = Right ear (red) · ✕ = Left ear (teal)</p>
         </div>
         <div class="disclaimer">⚠️ Remember: This is a self-assessment for curiosity only. Consult an audiologist for professional evaluation.</div>
@@ -328,4 +431,6 @@ function renderResults(profile?: HearingProfile): void {
   document.getElementById('new-test')?.addEventListener('click', () => { currentScreen = 'calibration'; render(); });
 }
 
+// Initialize
+checkUrlParams();
 render();

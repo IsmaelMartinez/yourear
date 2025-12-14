@@ -3,7 +3,7 @@
  * Standard conventions: O = Right ear, X = Left ear
  */
 
-import { HearingProfile, HearingThreshold, classifyHearingLoss, TEST_FREQUENCIES } from '../types';
+import { HearingProfile, HearingThreshold, classifyHearingLoss, TEST_FREQUENCIES, getExpectedThresholds } from '../types';
 
 interface Colors {
   background: string;
@@ -13,6 +13,8 @@ interface Colors {
   rightEar: string;
   leftEar: string;
   normalRange: string;
+  expectedRange: string;
+  expectedLine: string;
 }
 
 const COLORS: Colors = {
@@ -23,6 +25,8 @@ const COLORS: Colors = {
   rightEar: '#ff6b6b',
   leftEar: '#4ecdc4',
   normalRange: 'rgba(78, 205, 196, 0.1)',
+  expectedRange: 'rgba(251, 191, 36, 0.15)',
+  expectedLine: '#fbbf24',
 };
 
 const FREQUENCIES = [125, 250, 500, 1000, 2000, 4000, 8000];
@@ -77,6 +81,11 @@ export class Audiogram {
     ctx.fillRect(0, 0, width, height);
     
     this.drawNormalRange();
+    
+    if (this.profile?.age) {
+      this.drawExpectedRange(this.profile.age);
+    }
+    
     this.drawGrid();
     this.drawLabels();
     
@@ -94,6 +103,38 @@ export class Audiogram {
       this.width - PADDING.left - PADDING.right,
       this.dbToY(20) - this.dbToY(DB_MIN)
     );
+  }
+
+  private drawExpectedRange(age: number): void {
+    const expected = getExpectedThresholds(age);
+    const ctx = this.ctx;
+    
+    // Draw filled area between median and p90
+    ctx.fillStyle = COLORS.expectedRange;
+    ctx.beginPath();
+    
+    // Top line (median)
+    const testFreqs = [250, 500, 1000, 2000, 4000, 8000];
+    ctx.moveTo(this.freqToX(testFreqs[0]), this.dbToY(expected[testFreqs[0]].median));
+    testFreqs.forEach(f => ctx.lineTo(this.freqToX(f), this.dbToY(expected[f].median)));
+    
+    // Bottom line (p90) - reverse order
+    for (let i = testFreqs.length - 1; i >= 0; i--) {
+      ctx.lineTo(this.freqToX(testFreqs[i]), this.dbToY(expected[testFreqs[i]].p90));
+    }
+    
+    ctx.closePath();
+    ctx.fill();
+    
+    // Draw median line (expected for age)
+    ctx.strokeStyle = COLORS.expectedLine;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(this.freqToX(testFreqs[0]), this.dbToY(expected[testFreqs[0]].median));
+    testFreqs.forEach(f => ctx.lineTo(this.freqToX(f), this.dbToY(expected[f].median)));
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   private drawGrid(): void {
@@ -207,18 +248,35 @@ export class Audiogram {
   }
 
   private drawLegend(): void {
-    const x = this.width - PADDING.right - 100;
-    const y = PADDING.top + 20;
+    const x = this.width - PADDING.right - 120;
+    let y = PADDING.top + 15;
     
     this.ctx.fillStyle = COLORS.text;
-    this.ctx.font = '12px "DM Sans", sans-serif';
+    this.ctx.font = '11px "DM Sans", sans-serif';
     this.ctx.textAlign = 'left';
     
+    // Right ear
     this.drawCircle(x, y, COLORS.rightEar);
-    this.ctx.fillText('Right ear', x + 20, y + 4);
+    this.ctx.fillText('Right ear', x + 18, y + 4);
+    y += 22;
     
-    this.drawX(x, y + 25, COLORS.leftEar);
-    this.ctx.fillText('Left ear', x + 20, y + 29);
+    // Left ear
+    this.drawX(x, y, COLORS.leftEar);
+    this.ctx.fillText('Left ear', x + 18, y + 4);
+    y += 22;
+    
+    // Expected for age (if shown)
+    if (this.profile?.age) {
+      this.ctx.strokeStyle = COLORS.expectedLine;
+      this.ctx.lineWidth = 2;
+      this.ctx.setLineDash([4, 4]);
+      this.ctx.beginPath();
+      this.ctx.moveTo(x - 10, y);
+      this.ctx.lineTo(x + 10, y);
+      this.ctx.stroke();
+      this.ctx.setLineDash([]);
+      this.ctx.fillText(`Expected (${this.profile.age}y)`, x + 18, y + 4);
+    }
   }
 }
 
@@ -242,7 +300,12 @@ export function generateSummary(profile: HearingProfile): string {
     'profound': '🔴 Profound loss',
   }[grade] || grade);
   
-  const lines = ['📊 Hearing Assessment Summary', ''];
+  const lines = ['📊 Hearing Assessment Summary'];
+  
+  if (profile.age) {
+    lines.push(`👤 Age: ${profile.age} years`);
+  }
+  lines.push('');
   
   const rightPTA = calcPTA('rightEar');
   const leftPTA = calcPTA('leftEar');
@@ -254,7 +317,27 @@ export function generateSummary(profile: HearingProfile): string {
     lines.push(`Left ear: ${leftPTA.toFixed(0)} dB HL (${formatGrade(classifyHearingLoss(leftPTA))})`);
   }
   
-  lines.push('', '⚠️ This is a self-assessment tool, not a medical diagnosis.', 'Please consult an audiologist for professional evaluation.');
+  // Age comparison
+  if (profile.age && (rightPTA !== null || leftPTA !== null)) {
+    const expected = getExpectedThresholds(profile.age);
+    const expectedPTA = (expected[500].median + expected[1000].median + expected[2000].median) / 3;
+    
+    lines.push('');
+    lines.push(`📈 Expected PTA for age ${profile.age}: ~${expectedPTA.toFixed(0)} dB HL`);
+    
+    const avgPTA = ((rightPTA || 0) + (leftPTA || 0)) / (rightPTA && leftPTA ? 2 : 1);
+    if (avgPTA <= expectedPTA) {
+      lines.push('✨ Your hearing is better than or equal to average for your age!');
+    } else if (avgPTA <= expectedPTA + 10) {
+      lines.push('👍 Your hearing is typical for your age.');
+    } else {
+      lines.push('📋 Your hearing shows more loss than typical for your age.');
+    }
+  }
+  
+  lines.push('');
+  lines.push('⚠️ This is a self-assessment tool, not a medical diagnosis.');
+  lines.push('Please consult an audiologist for professional evaluation.');
   
   return lines.join('\n');
 }

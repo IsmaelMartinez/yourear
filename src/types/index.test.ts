@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyHearingLoss, TEST_FREQUENCIES, DEFAULT_TEST_CONFIG } from './index';
+import { classifyHearingLoss, TEST_FREQUENCIES, DEFAULT_TEST_CONFIG, QUICK_TEST_CONFIG } from './index';
 
 describe('classifyHearingLoss', () => {
   it('classifies normal hearing (≤20 dB)', () => {
@@ -60,6 +60,24 @@ describe('DEFAULT_TEST_CONFIG', () => {
 
   it('uses TEST_FREQUENCIES', () => {
     expect(DEFAULT_TEST_CONFIG.frequencies).toBe(TEST_FREQUENCIES);
+  });
+});
+
+describe('QUICK_TEST_CONFIG', () => {
+  it('uses only 3 key frequencies', () => {
+    expect(QUICK_TEST_CONFIG.frequencies).toEqual([1000, 4000, 8000]);
+    expect(QUICK_TEST_CONFIG.frequencies).toHaveLength(3);
+  });
+
+  it('has faster timing than full test', () => {
+    expect(QUICK_TEST_CONFIG.toneDuration).toBeLessThan(DEFAULT_TEST_CONFIG.toneDuration);
+    expect(QUICK_TEST_CONFIG.responseDuration).toBeLessThan(DEFAULT_TEST_CONFIG.responseDuration);
+  });
+
+  it('uses same threshold detection settings', () => {
+    expect(QUICK_TEST_CONFIG.stepUp).toBe(DEFAULT_TEST_CONFIG.stepUp);
+    expect(QUICK_TEST_CONFIG.stepDown).toBe(DEFAULT_TEST_CONFIG.stepDown);
+    expect(QUICK_TEST_CONFIG.startLevel).toBe(DEFAULT_TEST_CONFIG.startLevel);
   });
 });
 
