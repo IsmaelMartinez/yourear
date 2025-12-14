@@ -19,6 +19,8 @@
 - 🎧 **Separate ear testing** - Tests right and left ears independently
 - 📊 **Standard audiogram** - Results displayed following audiological conventions
 - 💾 **Local storage** - Save your hearing profiles (no account needed)
+- 📄 **PDF Export** - Export your results to share with healthcare providers
+- 📈 **Profile Comparison** - Compare multiple tests over time to track changes
 - 🌙 **Dark theme** - Easy on the eyes during testing
 - 📱 **Responsive design** - Works on desktop and mobile
 - ♿ **Keyboard shortcuts** - Space/Enter to respond "heard", N/Escape for "not heard"
@@ -132,21 +134,24 @@ yourear/
 │   │   ├── home.ts           # Landing page with test options
 │   │   ├── calibration.ts    # Age input & headphone testing
 │   │   ├── test.ts           # Active hearing test
-│   │   └── results.ts        # Audiogram & summary display
+│   │   ├── results.ts        # Audiogram & summary display
+│   │   └── comparison.ts     # Compare multiple tests over time
 │   ├── audio/
 │   │   ├── tone-generator.ts # Pure tone synthesis (Web Audio API)
 │   │   ├── hearing-test.ts   # Test logic (Hughson-Westlake procedure)
 │   │   └── hearing-test.test.ts
 │   ├── ui/
 │   │   ├── audiogram.ts      # Canvas audiogram visualization
-│   │   └── audiogram.test.ts
+│   │   ├── audiogram.test.ts
+│   │   └── comparison-audiogram.ts  # Multi-profile overlay chart
 │   ├── storage/
 │   │   ├── profile.ts        # LocalStorage management
 │   │   └── profile.test.ts
 │   ├── state/
 │   │   └── app-state.ts      # Centralized state management
 │   ├── services/
-│   │   └── test-runner.ts    # Test lifecycle management
+│   │   ├── test-runner.ts    # Test lifecycle management
+│   │   └── pdf-export.ts     # PDF report generation
 │   ├── utils/
 │   │   └── dom.ts            # DOM helper utilities
 │   └── types/
@@ -168,10 +173,11 @@ Contributions are welcome! Some ideas:
 
 - [ ] Add more test frequencies (125 Hz, 750 Hz, 3000 Hz, 6000 Hz)
 - [ ] Speech audiometry (word recognition tests)
-- [ ] Export results as PDF
-- [ ] Compare multiple profiles over time
+- [x] ~~Export results as PDF~~ ✅ Implemented
+- [x] ~~Compare multiple profiles over time~~ ✅ Implemented
 - [ ] Add masking noise for more accurate testing
 - [ ] Implement hearing compensation (EQ based on audiogram)
+- [ ] PWA support (offline use, installable)
 
 ## 📜 License
 
