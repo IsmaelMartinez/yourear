@@ -52,6 +52,10 @@ export class Audiogram {
     this.canvas.style.maxWidth = `${width}px`;
     this.canvas.style.height = 'auto';
     
+    // Accessibility: Mark canvas as presentational since we provide text alternatives
+    this.canvas.setAttribute('role', 'presentation');
+    this.canvas.setAttribute('aria-hidden', 'true');
+    
     this.ctx = this.canvas.getContext('2d')!;
     container.appendChild(this.canvas);
     this.draw();
