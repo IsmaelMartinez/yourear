@@ -123,8 +123,8 @@ export class Audiogram {
     ctx.fillStyle = COLORS.expectedRange;
     ctx.beginPath();
     
-    // Top line (median)
-    const testFreqs = [250, 500, 1000, 2000, 4000, 8000];
+    // Use all frequencies shown on the audiogram
+    const testFreqs = FREQUENCIES;
     ctx.moveTo(this.freqToX(testFreqs[0]), this.dbToY(expected[testFreqs[0]].median));
     testFreqs.forEach(f => ctx.lineTo(this.freqToX(f), this.dbToY(expected[f].median)));
     
