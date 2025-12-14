@@ -45,25 +45,12 @@ Add inter-octave frequencies for more detailed testing.
 
 ## 🔬 Medium Priority (High Value, Higher Effort)
 
-### 5. Speech-in-Noise Test
+### 5. ~~Speech-in-Noise Test~~ ✅ IMPLEMENTED
 **Value:** Very High | **Effort:** ~8-10 hours
 
-Test ability to understand speech with background noise - more practical than pure tones.
+Test ability to understand speech with background noise.
 
-**Technical approach:**
-1. Pre-record word lists (standardized like CNC or NU-6)
-2. Mix with babble noise at various SNR levels
-3. User types/selects what they heard
-4. Score as percentage correct at each SNR
-
-**Challenges:**
-- Need high-quality recordings
-- Multiple language support
-- Copyright considerations for standardized lists
-
-**Resources:**
-- [QuickSIN test](https://www.etymotic.com/product/quicksin/)
-- Open source word lists needed
+**Implementation:** Uses Web Speech API for speech synthesis and generated pink noise. Tests at 5 SNR levels (+10 to -10 dB) with word selection interface. Calculates SNR-50 threshold.
 
 ---
 
@@ -171,7 +158,7 @@ Internationalization for broader reach.
 |-------|----------|--------|--------|
 | **Phase 1** | PDF Export, Profile Comparison | ~6 hours | ✅ DONE |
 | **Phase 2** | PWA Support, Extended Frequencies | ~4 hours | ✅ DONE |
-| **Phase 3** | Speech-in-Noise, Tinnitus Matcher | ~14 hours | Partial (Tinnitus ✅) |
+| **Phase 3** | Speech-in-Noise, Tinnitus Matcher | ~14 hours | ✅ DONE |
 | **Phase 4** | Hearing Compensation (if demand) | ~20 hours | Pending |
 
 ---

@@ -23,6 +23,7 @@
 - 📈 **Profile Comparison** - Compare multiple tests over time to track changes
 - 📲 **PWA Support** - Install as an app, works offline
 - 🔔 **Tinnitus Matcher** - Identify your tinnitus frequency and loudness
+- 🗣️ **Speech-in-Noise Test** - Measure hearing ability in noisy environments
 - 🌙 **Dark theme** - Easy on the eyes during testing
 - 📱 **Responsive design** - Works on desktop and mobile
 - ♿ **Keyboard shortcuts** - Space/Enter to respond "heard", N/Escape for "not heard"
@@ -138,10 +139,12 @@ yourear/
 │   │   ├── test.ts           # Active hearing test
 │   │   ├── results.ts        # Audiogram & summary display
 │   │   ├── comparison.ts     # Compare multiple tests over time
-│   │   └── tinnitus.ts       # Tinnitus frequency matcher
+│   │   ├── tinnitus.ts       # Tinnitus frequency matcher
+│   │   └── speech-noise.ts   # Speech-in-noise test
 │   ├── audio/
 │   │   ├── tone-generator.ts # Pure tone synthesis (Web Audio API)
 │   │   ├── tinnitus-tone.ts  # Adjustable tone for tinnitus matching
+│   │   ├── speech-noise.ts   # Noise generator and speech synthesis
 │   │   ├── hearing-test.ts   # Test logic (Hughson-Westlake procedure)
 │   │   └── hearing-test.test.ts
 │   ├── ui/
@@ -176,7 +179,7 @@ yourear/
 Contributions are welcome! Some ideas:
 
 - [x] ~~Add more test frequencies (125 Hz, 750 Hz, 3000 Hz, 6000 Hz)~~ ✅ Implemented (Detailed Test mode)
-- [ ] Speech audiometry (word recognition tests)
+- [x] ~~Speech audiometry (word recognition tests)~~ ✅ Implemented (Speech-in-Noise test)
 - [x] ~~Export results as PDF~~ ✅ Implemented
 - [x] ~~Compare multiple profiles over time~~ ✅ Implemented
 - [x] ~~PWA support (offline use, installable)~~ ✅ Implemented
