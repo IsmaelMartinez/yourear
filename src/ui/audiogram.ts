@@ -17,16 +17,23 @@ interface Colors {
   expectedLine: string;
 }
 
+/**
+ * Colors for audiogram rendering
+ * 
+ * NOTE: rightEar (#ff6b6b) and leftEar (#4ecdc4) are also defined as CSS variables
+ * (--accent-right and --accent-left) in styles.css. Canvas API cannot read CSS
+ * variables, so we duplicate them here. Keep them in sync if changing!
+ */
 const COLORS: Colors = {
   background: '#0a0a0f',
   grid: '#2a2a35',
   gridLight: '#1a1a22',
   text: '#a0a0b0',
-  rightEar: '#ff6b6b',
-  leftEar: '#4ecdc4',
+  rightEar: '#ff6b6b',   // Sync with --accent-right in styles.css
+  leftEar: '#4ecdc4',    // Sync with --accent-left in styles.css
   normalRange: 'rgba(78, 205, 196, 0.1)',
   expectedRange: 'rgba(251, 191, 36, 0.15)',
-  expectedLine: '#fbbf24',
+  expectedLine: '#fbbf24', // Sync with --accent-warning in styles.css
 };
 
 const FREQUENCIES = [125, 250, 500, 1000, 2000, 4000, 8000];

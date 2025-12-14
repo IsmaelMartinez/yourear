@@ -175,39 +175,41 @@ const actions = {
 
 ---
 
-### 2.5 Unused CSS Classes (Deferred)
+### 2.5 ~~Unused CSS Classes~~ ✅ RESOLVED
 
-**Analysis:** Several CSS classes may be unused:
+**Problem (was):** Several CSS classes were unused:
 - `.btn--full`
 - `.sound-wave--inactive`
 - `.screen--hidden`
 - `.pulse` (animation defined but class not used)
 
-**Decision:** Deferred - low impact. May be useful for future features.
+**Solution:** Removed all unused CSS classes from `styles.css`.
 
-**Status:** ⏸️ DEFERRED
+**Status:** ✅ COMPLETED
 
 ---
 
-### 2.6 ~~Test Coverage Gaps~~ ✅ PARTIALLY RESOLVED
+### 2.6 ~~Test Coverage Gaps~~ ✅ RESOLVED
 
 **Problem (was):** Some modules lacked comprehensive tests:
 - `audiogram.ts` - 0 tests (canvas rendering)
 - `tone-generator.ts` - 0 tests (mocked in hearing-test.test.ts)
 
-**Solution:** Added `audiogram.test.ts` with 12 tests for `generateSummary()`. Canvas rendering and tone-generator remain untested (acceptable for now).
+**Solution:** 
+- Added `audiogram.test.ts` with 12 tests for `generateSummary()`
+- Added `tone-generator.test.ts` with 15 tests covering `AudioInitError`, module exports, and playTone behavior
 
-**Status:** ✅ RESOLVED for `generateSummary()`
+**Status:** ✅ COMPLETED
 
 ---
 
-### 2.7 Inconsistent Error Handling (Deferred)
+### 2.7 ~~Inconsistent Error Handling~~ ✅ RESOLVED
 
-**Analysis:** Some functions silently fail (e.g., `getAllProfiles()` returns empty array on error).
+**Problem (was):** Some functions silently failed without logging.
 
-**Decision:** Acceptable for now. The app gracefully degrades - losing saved profiles is unfortunate but not catastrophic.
+**Solution:** Added console error logging to `getAllProfiles()` and `createProfile()` in `profile.ts` with `[YourEar]` prefix for easy identification.
 
-**Status:** ⏸️ DEFERRED
+**Status:** ✅ COMPLETED
 
 ---
 
@@ -215,23 +217,23 @@ const actions = {
 
 > **Note:** This section documents issues as they were BEFORE the refactoring. Items marked ✅ have been resolved.
 
-### 3.1 Simplify Profile Storage API (Deferred)
+### 3.1 ~~Simplify Profile Storage API~~ ✅ RESOLVED
 
-**Analysis:** `saveProfile` naming could be clearer (it always creates new profiles, never updates).
+**Problem (was):** `saveProfile` naming was unclear (it always creates new profiles, never updates).
 
-**Decision:** Low priority. The API works correctly, naming is minor issue.
+**Solution:** Renamed to `createProfile()` and added `@deprecated` alias for `saveProfile` for backwards compatibility. Added JSDoc documentation.
 
-**Status:** ⏸️ DEFERRED
+**Status:** ✅ COMPLETED
 
 ---
 
-### 3.2 Remove Redundant State Spreading (Deferred)
+### 3.2 State Spreading (Intentionally Unchanged)
 
 **Analysis:** `getState()` in `HearingTest` creates shallow copies each call.
 
-**Decision:** Very low impact. The defensive copy prevents accidental state mutation.
+**Decision:** Keep as-is. The defensive copy is intentional to prevent accidental state mutation from external code. Very low performance impact.
 
-**Status:** ⏸️ DEFERRED
+**Status:** ✅ NO CHANGE NEEDED
 
 ---
 
@@ -269,13 +271,13 @@ export const QUICK_TEST_CONFIG: TestConfig = {
 
 ---
 
-### 3.4 Simplify Audiogram Color Definitions (Deferred)
+### 3.4 ~~Audiogram Color Definitions~~ ✅ RESOLVED
 
-**Analysis:** Colors are defined in both CSS and TypeScript (Canvas API requires JS colors).
+**Problem (was):** Colors defined in both CSS and TypeScript without cross-reference.
 
-**Decision:** Acceptable duplication. Canvas cannot read CSS variables. Adding a comment would help maintainability.
+**Solution:** Added comprehensive JSDoc comment to `COLORS` constant in `audiogram.ts` explaining why duplication exists (Canvas API cannot read CSS variables) and noting which CSS variables correspond to each color.
 
-**Status:** ⏸️ DEFERRED (with note for future)
+**Status:** ✅ COMPLETED
 
 ---
 
@@ -382,13 +384,14 @@ function checkUrlParams(): void {
 
 | Metric | Before | After |
 |--------|--------|-------|
-| `main.ts` lines | 555 | **85** |
+| `main.ts` lines | 555 | **98** |
 | Screen modules | 0 | **4** (~100 lines each) |
-| Test count | 42 | **59** (+17 tests) |
-| Test files | 3 | **4** (+audiogram.test.ts) |
+| Test count | 42 | **74** (+32 tests) |
+| Test files | 3 | **5** (+audiogram.test.ts, +tone-generator.test.ts) |
 | Helper functions | 2 | **8** (onClick, navigateTo, formatFrequency, etc.) |
 | State management | Scattered globals | **Centralized AppState** |
 | Documented constants | ~50% | **~95%** |
+| Unused CSS classes | 4 | **0** |
 
 ---
 

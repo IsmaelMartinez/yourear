@@ -3,7 +3,7 @@
  */
 
 import { getState, setHearingTest, navigateTo } from '../state/app-state';
-import { saveProfile } from '../storage/profile';
+import { createProfile } from '../storage/profile';
 import { HearingTest, TestEventType } from '../audio/hearing-test';
 import { QUICK_TEST_CONFIG } from '../types';
 
@@ -51,7 +51,7 @@ function handleTestComplete(hearingTest: HearingTest, userAge?: number): void {
   const { testMode } = getState();
   const testLabel = testMode === 'quick' ? 'Quick Test' : 'Full Test';
   
-  const profile = saveProfile({ 
+  const profile = createProfile({ 
     ...results, 
     name: `${testLabel} - ${new Date().toLocaleDateString()}`,
     age: userAge,

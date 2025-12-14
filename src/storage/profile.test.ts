@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getAllProfiles, saveProfile, getLatestProfile } from './profile';
+import { getAllProfiles, createProfile, getLatestProfile } from './profile';
 
 describe('profile storage', () => {
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe('profile storage', () => {
     });
 
     it('returns saved profiles', () => {
-      const profile = saveProfile({
+      const profile = createProfile({
         name: 'Test Profile',
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-01'),
@@ -26,7 +26,7 @@ describe('profile storage', () => {
     });
 
     it('restores Date objects', () => {
-      saveProfile({
+      createProfile({
         name: 'Test',
         createdAt: new Date('2024-01-15'),
         updatedAt: new Date('2024-01-15'),
@@ -39,16 +39,16 @@ describe('profile storage', () => {
     });
   });
 
-  describe('saveProfile', () => {
+  describe('createProfile', () => {
     it('generates unique id', () => {
-      const profile1 = saveProfile({
+      const profile1 = createProfile({
         name: 'Test 1',
         createdAt: new Date(),
         updatedAt: new Date(),
         thresholds: [],
       });
 
-      const profile2 = saveProfile({
+      const profile2 = createProfile({
         name: 'Test 2',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -61,7 +61,7 @@ describe('profile storage', () => {
     });
 
     it('persists to localStorage', () => {
-      saveProfile({
+      createProfile({
         name: 'Persisted',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -79,7 +79,7 @@ describe('profile storage', () => {
         { frequency: 2000, leftEar: 25, rightEar: 20 },
       ];
 
-      saveProfile({
+      createProfile({
         name: 'With Thresholds',
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -97,21 +97,21 @@ describe('profile storage', () => {
     });
 
     it('returns most recent profile', () => {
-      saveProfile({
+      createProfile({
         name: 'Old',
         createdAt: new Date('2024-01-01'),
         updatedAt: new Date('2024-01-01'),
         thresholds: [],
       });
 
-      saveProfile({
+      createProfile({
         name: 'New',
         createdAt: new Date('2024-06-01'),
         updatedAt: new Date('2024-06-01'),
         thresholds: [],
       });
 
-      saveProfile({
+      createProfile({
         name: 'Middle',
         createdAt: new Date('2024-03-01'),
         updatedAt: new Date('2024-03-01'),

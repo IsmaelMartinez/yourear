@@ -11,7 +11,7 @@ import { renderHome } from './screens/home';
 import { renderCalibration } from './screens/calibration';
 import { renderTest, cleanupTestScreen } from './screens/test';
 import { renderResults } from './screens/results';
-import { saveProfile, getAllProfiles } from './storage/profile';
+import { createProfile, getAllProfiles } from './storage/profile';
 
 // ============================================
 // Screen Router
@@ -65,7 +65,7 @@ function seedDemoProfile(): void {
   const hasDemo = existing.some(p => p.name?.includes('Demo'));
   
   if (!hasDemo) {
-    saveProfile({
+    createProfile({
       name: 'Demo - Age 43',
       age: 43,
       createdAt: new Date(),

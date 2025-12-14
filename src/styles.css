@@ -235,10 +235,6 @@ body::before {
   border-radius: var(--radius-lg);
 }
 
-.btn--full {
-  width: 100%;
-}
-
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -423,12 +419,6 @@ body::before {
 .sound-wave__bar:nth-child(4) { animation-delay: 0.3s; height: 35px; }
 .sound-wave__bar:nth-child(5) { animation-delay: 0.4s; height: 20px; }
 
-.sound-wave--inactive .sound-wave__bar {
-  animation: none;
-  height: 6px;
-  opacity: 0.3;
-}
-
 /* Progress bar */
 .progress {
   background: var(--bg-tertiary);
@@ -520,10 +510,6 @@ body::before {
 /* Screen states */
 .screen {
   animation: fadeIn 0.4s ease;
-}
-
-.screen--hidden {
-  display: none;
 }
 
 /* Footer */
@@ -657,11 +643,6 @@ body::before {
   50% {
     transform: scale(1.05);
   }
-}
-
-/* Pulse animation for active listening */
-.pulse {
-  animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* Utility classes for repeated inline styles */
