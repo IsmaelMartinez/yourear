@@ -25,18 +25,12 @@ Overlay multiple audiograms to track hearing changes over time.
 
 ---
 
-### 3. PWA / Offline Support
+### 3. ~~PWA / Offline Support~~ ✅ IMPLEMENTED
 **Value:** Medium-High | **Effort:** ~2-3 hours
 
 Make the app installable and work offline.
 
-**Technical approach:**
-- Add `manifest.json` with app metadata
-- Implement service worker for caching
-- Vite PWA plugin simplifies this
-
-**Resources:**
-- [vite-plugin-pwa](https://vite-pwa-org.netlify.app/)
+**Implementation:** Using vite-plugin-pwa with workbox for service worker generation and asset caching.
 
 ---
 
@@ -198,7 +192,7 @@ Internationalization for broader reach.
 | Phase | Features | Effort | Status |
 |-------|----------|--------|--------|
 | **Phase 1** | PDF Export, Profile Comparison | ~6 hours | ✅ DONE |
-| **Phase 2** | PWA Support, Extended Frequencies | ~4 hours | Pending |
+| **Phase 2** | PWA Support, Extended Frequencies | ~4 hours | In Progress |
 | **Phase 3** | Speech-in-Noise, Tinnitus Matcher | ~14 hours | Pending |
 | **Phase 4** | Hearing Compensation (if demand) | ~20 hours | Pending |
 

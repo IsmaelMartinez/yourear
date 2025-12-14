@@ -21,6 +21,7 @@
 - 💾 **Local storage** - Save your hearing profiles (no account needed)
 - 📄 **PDF Export** - Export your results to share with healthcare providers
 - 📈 **Profile Comparison** - Compare multiple tests over time to track changes
+- 📲 **PWA Support** - Install as an app, works offline
 - 🌙 **Dark theme** - Easy on the eyes during testing
 - 📱 **Responsive design** - Works on desktop and mobile
 - ♿ **Keyboard shortcuts** - Space/Enter to respond "heard", N/Escape for "not heard"
@@ -175,9 +176,9 @@ Contributions are welcome! Some ideas:
 - [ ] Speech audiometry (word recognition tests)
 - [x] ~~Export results as PDF~~ ✅ Implemented
 - [x] ~~Compare multiple profiles over time~~ ✅ Implemented
+- [x] ~~PWA support (offline use, installable)~~ ✅ Implemented
 - [ ] Add masking noise for more accurate testing
 - [ ] Implement hearing compensation (EQ based on audiogram)
-- [ ] PWA support (offline use, installable)
 
 ## 📜 License
 
