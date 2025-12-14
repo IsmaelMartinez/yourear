@@ -737,6 +737,63 @@ body::before {
   margin-top: var(--spacing-lg);
 }
 
+/* Speech-in-Noise test */
+.speech-select {
+  width: 100%;
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.speech-select:focus {
+  outline: 3px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.speech-test-display {
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+}
+
+.speech-question {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-xl);
+}
+
+.speech-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--spacing-sm);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.speech-option {
+  padding: var(--spacing-md) !important;
+  font-size: 1.1rem !important;
+  text-transform: capitalize;
+}
+
+.speech-option:hover {
+  background: var(--accent-primary) !important;
+  color: white !important;
+}
+
+.speech-listening {
+  padding: var(--spacing-xl);
+}
+
+.speech-listening__icon {
+  font-size: 4rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }

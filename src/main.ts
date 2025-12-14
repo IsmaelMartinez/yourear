@@ -13,6 +13,7 @@ import { renderTest, cleanupTestScreen } from './screens/test';
 import { renderResults } from './screens/results';
 import { renderComparison } from './screens/comparison';
 import { renderTinnitus, cleanupTinnitusScreen } from './screens/tinnitus';
+import { renderSpeechNoise, cleanupSpeechNoiseScreen } from './screens/speech-noise';
 import { createProfile, getAllProfiles } from './storage/profile';
 
 // ============================================
@@ -30,6 +31,9 @@ function render(): void {
   }
   if (screen !== 'tinnitus') {
     cleanupTinnitusScreen();
+  }
+  if (screen !== 'speech-noise') {
+    cleanupSpeechNoiseScreen();
   }
   
   switch (screen) {
@@ -50,6 +54,9 @@ function render(): void {
       break;
     case 'tinnitus':
       renderTinnitus();
+      break;
+    case 'speech-noise':
+      renderSpeechNoise();
       break;
   }
 }

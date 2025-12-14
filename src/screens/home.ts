@@ -73,6 +73,7 @@ export function renderHome(): void {
   onClick('view-latest', () => { if (latest) navigateTo('results', { profile: latest }); });
   onClick('compare-tests', () => navigateTo('comparison'));
   onClick('tinnitus-matcher', () => navigateTo('tinnitus'));
+  onClick('speech-noise-test', () => navigateTo('speech-noise'));
   
   // Render audiogram preview (wider for better readability)
   if (latest) {
@@ -126,10 +127,16 @@ function renderToolsSection(): string {
   return `
     <section class="card" aria-labelledby="tools-title">
       <h2 class="card__title" id="tools-title"><span aria-hidden="true">🛠️</span> Other Tools</h2>
-      <button class="btn btn--secondary" id="tinnitus-matcher" style="width: 100%;">
-        <span aria-hidden="true">🔔</span> Tinnitus Frequency Matcher
-        <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">Identify your tinnitus frequency</span>
-      </button>
+      <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+        <button class="btn btn--secondary" id="speech-noise-test" style="width: 100%;">
+          <span aria-hidden="true">🗣️</span> Speech-in-Noise Test
+          <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">Test hearing in noisy environments · ~4 min</span>
+        </button>
+        <button class="btn btn--secondary" id="tinnitus-matcher" style="width: 100%;">
+          <span aria-hidden="true">🔔</span> Tinnitus Frequency Matcher
+          <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">Identify your tinnitus frequency</span>
+        </button>
+      </div>
     </section>
   `;
 }
