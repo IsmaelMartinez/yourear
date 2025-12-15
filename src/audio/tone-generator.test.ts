@@ -120,7 +120,16 @@ describe('tone-generator', () => {
       mockAudioContext = createMockAudioContext();
       
       originalAudioContext = globalThis.AudioContext;
-      globalThis.AudioContext = vi.fn(() => mockAudioContext) as unknown as typeof AudioContext;
+      // Use a class constructor for vitest v4 compatibility
+      globalThis.AudioContext = class MockAudioContext {
+        state = mockAudioContext.state;
+        currentTime = mockAudioContext.currentTime;
+        destination = mockAudioContext.destination;
+        createOscillator = mockAudioContext.createOscillator;
+        createGain = mockAudioContext.createGain;
+        createStereoPanner = mockAudioContext.createStereoPanner;
+        resume = mockAudioContext.resume;
+      } as unknown as typeof AudioContext;
     });
 
     afterEach(() => {
@@ -138,9 +147,9 @@ describe('tone-generator', () => {
         channel: 'right',
       });
       
-      // Give it a tick to set up
+      // Give it a tick to set up and verify oscillator was created
       await vi.waitFor(() => {
-        expect(globalThis.AudioContext).toHaveBeenCalled();
+        expect(mockAudioContext.createOscillator).toHaveBeenCalled();
       }, { timeout: 100 });
       
       // Trigger end
@@ -193,7 +202,16 @@ describe('tone-generator', () => {
       mockAudioContext.createOscillator = vi.fn(() => mockOscillator);
       mockAudioContext.createGain = vi.fn(() => mockGain);
       mockAudioContext.createStereoPanner = vi.fn(() => mockPanner);
-      globalThis.AudioContext = vi.fn(() => mockAudioContext) as unknown as typeof AudioContext;
+      // Use a class constructor for vitest v4 compatibility
+      globalThis.AudioContext = class MockAudioContext {
+        state = mockAudioContext.state;
+        currentTime = mockAudioContext.currentTime;
+        destination = mockAudioContext.destination;
+        createOscillator = mockAudioContext.createOscillator;
+        createGain = mockAudioContext.createGain;
+        createStereoPanner = mockAudioContext.createStereoPanner;
+        resume = mockAudioContext.resume;
+      } as unknown as typeof AudioContext;
       
       const { playTone } = await import('./tone-generator');
       
