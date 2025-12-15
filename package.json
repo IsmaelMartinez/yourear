@@ -21,12 +21,12 @@
   "author": "ISMAELMARTINEZ",
   "license": "MIT",
   "devDependencies": {
-    "@vitest/coverage-v8": "^1.6.1",
+    "@vitest/coverage-v8": "^4.0.15",
     "jsdom": "^24.0.0",
     "typescript": "^5.3.3",
-    "vite": "^5.0.10",
+    "vite": "^7.3.0",
     "vite-plugin-pwa": "^0.21.1",
-    "vitest": "^1.2.0"
+    "vitest": "^4.0.15"
   },
   "dependencies": {
     "jspdf": "^3.0.4"
