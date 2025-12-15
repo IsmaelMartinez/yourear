@@ -7,6 +7,8 @@ import { getAllProfiles, getLatestProfile } from '../storage/profile';
 import { Audiogram } from '../ui/audiogram';
 import { navigateTo } from '../state/app-state';
 import { HearingProfile } from '../types';
+import { renderLanguageSelector, bindLanguageSelector } from '../ui/language-selector';
+import { t } from '../i18n';
 
 export function renderHome(): void {
   const app = getAppContainer();
@@ -14,45 +16,46 @@ export function renderHome(): void {
   const latest = getLatestProfile();
   
   app.innerHTML = `
-    <main id="main-content" class="screen" tabindex="-1" aria-label="YourEar Home">
+    <main id="main-content" class="screen" tabindex="-1" aria-label="${t('home.title')} Home" style="position: relative;">
+      ${renderLanguageSelector()}
+      
       <header class="header" role="banner">
         <div class="header__logo" aria-hidden="true">👂</div>
-        <h1 class="header__title">YourEar</h1>
-        <p class="header__subtitle">Discover your hearing capabilities</p>
+        <h1 class="header__title">${t('home.title')}</h1>
+        <p class="header__subtitle">${t('home.subtitle')}</p>
       </header>
       
       <section class="card card--glow" aria-labelledby="assessment-title">
-        <h2 class="card__title" id="assessment-title"><span aria-hidden="true">🎧</span> Hearing Assessment</h2>
-        <p>Test your hearing across different frequencies to create a personal audiogram.</p>
+        <h2 class="card__title" id="assessment-title"><span aria-hidden="true">🎧</span> ${t('home.assessment.title')}</h2>
+        <p>${t('home.assessment.description')}</p>
         
         <div class="instructions" role="region" aria-labelledby="instructions-title">
-          <div class="instructions__title" id="instructions-title"><span aria-hidden="true">📋</span> Before you begin</div>
+          <div class="instructions__title" id="instructions-title"><span aria-hidden="true">📋</span> ${t('home.assessment.beforeYouBegin')}</div>
           <ul class="instructions__list" role="list">
-            <li>Use headphones for accurate results</li>
-            <li>Find a quiet environment</li>
-            <li>Set your device volume to about 50%</li>
-            <li>The test takes approximately 5-10 minutes</li>
+            <li>${t('home.assessment.instructions.headphones')}</li>
+            <li>${t('home.assessment.instructions.quiet')}</li>
+            <li>${t('home.assessment.instructions.volume')}</li>
+            <li>${t('home.assessment.instructions.time')}</li>
           </ul>
         </div>
         
         <div class="flex-buttons" role="group" aria-label="Test options">
           <button class="btn btn--primary btn--large" id="start-full-test" aria-describedby="full-test-desc">
-            <span aria-hidden="true">🎵</span> Full Test
-            <span id="full-test-desc" style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">6 frequencies · ~8 min</span>
+            <span aria-hidden="true">🎵</span> ${t('home.assessment.fullTest')}
+            <span id="full-test-desc" style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">${t('home.assessment.fullTestDesc')}</span>
           </button>
           <button class="btn btn--secondary btn--large" id="start-quick-test" aria-describedby="quick-test-desc">
-            <span aria-hidden="true">⚡</span> Quick Test
-            <span id="quick-test-desc" style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">3 frequencies · ~2 min</span>
+            <span aria-hidden="true">⚡</span> ${t('home.assessment.quickTest')}
+            <span id="quick-test-desc" style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">${t('home.assessment.quickTestDesc')}</span>
           </button>
         </div>
         <button class="btn btn--secondary mt-md" id="start-detailed-test" aria-describedby="detailed-test-desc" style="width: 100%;">
-          <span aria-hidden="true">🔬</span> Detailed Test
-          <span id="detailed-test-desc" style="display: inline; font-size: 0.75rem; opacity: 0.8; font-weight: normal; margin-left: 0.5rem;">11 frequencies incl. inter-octave · ~15 min</span>
+          <span aria-hidden="true">🔬</span> ${t('home.assessment.detailedTest')}
+          <span id="detailed-test-desc" style="display: inline; font-size: 0.75rem; opacity: 0.8; font-weight: normal; margin-left: 0.5rem;">${t('home.assessment.detailedTestDesc')}</span>
         </button>
         
         <div class="disclaimer" role="alert">
-          <span aria-hidden="true">⚠️</span> <strong>Medical Disclaimer:</strong> This is a self-assessment tool for curiosity and general awareness only. 
-          It is NOT a medical diagnosis. Always consult a qualified audiologist for professional hearing evaluation.
+          <span aria-hidden="true">⚠️</span> <strong>${t('home.disclaimer.title')}</strong> ${t('home.disclaimer.text')}
         </div>
       </section>
       
@@ -65,6 +68,9 @@ export function renderHome(): void {
   `;
   
   announce('Home screen loaded. Start a hearing test or view your previous results.');
+  
+  // Bind language selector
+  bindLanguageSelector();
   
   // Event bindings
   onClick('start-full-test', () => navigateTo('calibration', { mode: 'full' }));
@@ -90,13 +96,13 @@ export function renderHome(): void {
 function renderLatestResult(latest: HearingProfile): string {
   return `
     <section class="card" aria-labelledby="latest-result-title">
-      <h2 class="card__title" id="latest-result-title"><span aria-hidden="true">📊</span> Your Latest Result${latest.age ? ` (Age ${latest.age})` : ''}</h2>
+      <h2 class="card__title" id="latest-result-title"><span aria-hidden="true">📊</span> ${t('home.latestResult.title')}${latest.age ? ` (${latest.age} ${t('common.years')})` : ''}</h2>
       <div id="audiogram-preview" class="audiogram-container" role="img" aria-label="Audiogram showing your latest hearing test results"></div>
       <p class="text-muted-sm">
-        Tested on <time datetime="${latest.createdAt.toISOString()}">${latest.createdAt.toLocaleDateString()}</time>
+        ${t('home.latestResult.testedOn')} <time datetime="${latest.createdAt.toISOString()}">${latest.createdAt.toLocaleDateString()}</time>
       </p>
       <button class="btn btn--secondary mt-md" id="view-latest">
-        View Details
+        ${t('common.viewDetails')}
       </button>
     </section>
   `;
@@ -105,18 +111,18 @@ function renderLatestResult(latest: HearingProfile): string {
 function renderTestHistory(profiles: HearingProfile[]): string {
   return `
     <section class="card" aria-labelledby="history-title">
-      <h2 class="card__title" id="history-title"><span aria-hidden="true">📁</span> Test History</h2>
+      <h2 class="card__title" id="history-title"><span aria-hidden="true">📁</span> ${t('home.history.title')}</h2>
       <nav class="profiles__list" aria-label="Previous test results">
         ${profiles.slice(0, 5).map(p => `
           <button class="profile-item" data-id="${p.id}" type="button" aria-label="View ${p.name || 'Hearing Test'}${p.age ? `, age ${p.age}` : ''}, from ${p.createdAt.toLocaleDateString()}">
-            <span class="profile-item__name">${p.name || 'Hearing Test'}${p.age ? ` (${p.age}y)` : ''}</span>
+            <span class="profile-item__name">${p.name || 'Hearing Test'}${p.age ? ` (${p.age}${t('common.years')})` : ''}</span>
             <span class="profile-item__date" aria-hidden="true">${p.createdAt.toLocaleDateString()}</span>
           </button>
         `).join('')}
       </nav>
       ${profiles.length >= 2 ? `
         <button class="btn btn--secondary mt-md" id="compare-tests" style="width: 100%;">
-          <span aria-hidden="true">📈</span> Compare Tests Over Time
+          <span aria-hidden="true">📈</span> ${t('home.history.compare')}
         </button>
       ` : ''}
     </section>
@@ -126,15 +132,15 @@ function renderTestHistory(profiles: HearingProfile[]): string {
 function renderToolsSection(): string {
   return `
     <section class="card" aria-labelledby="tools-title">
-      <h2 class="card__title" id="tools-title"><span aria-hidden="true">🛠️</span> Other Tools</h2>
+      <h2 class="card__title" id="tools-title"><span aria-hidden="true">🛠️</span> ${t('home.tools.title')}</h2>
       <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
         <button class="btn btn--secondary" id="speech-noise-test" style="width: 100%;">
-          <span aria-hidden="true">🗣️</span> Speech-in-Noise Test
-          <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">Test hearing in noisy environments · ~4 min</span>
+          <span aria-hidden="true">🗣️</span> ${t('home.tools.speechNoise')}
+          <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">${t('home.tools.speechNoiseDesc')}</span>
         </button>
         <button class="btn btn--secondary" id="tinnitus-matcher" style="width: 100%;">
-          <span aria-hidden="true">🔔</span> Tinnitus Frequency Matcher
-          <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">Identify your tinnitus frequency</span>
+          <span aria-hidden="true">🔔</span> ${t('home.tools.tinnitus')}
+          <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">${t('home.tools.tinnitusDesc')}</span>
         </button>
       </div>
     </section>
@@ -144,16 +150,12 @@ function renderToolsSection(): string {
 function renderAboutSection(): string {
   return `
     <section class="card" aria-labelledby="about-title">
-      <h2 class="card__title" id="about-title"><span aria-hidden="true">🔬</span> About the Technology</h2>
+      <h2 class="card__title" id="about-title"><span aria-hidden="true">🔬</span> ${t('home.about.title')}</h2>
       <p class="text-secondary-lg">
-        YourEar uses the <strong>Web Audio API</strong> to generate precise pure tones 
-        across the standard audiometric frequencies (250 Hz to 8000 Hz). The test follows 
-        a simplified <strong>Hughson-Westlake procedure</strong> to find your hearing thresholds.
+        ${t('home.about.description')}
       </p>
       <p class="text-muted-sm">
-        <strong>Note:</strong> Due to hardware limitations of consumer devices, this tool cannot 
-        test ultrasonic frequencies (>20 kHz) used by bats or infrasonic frequencies (<20 Hz) 
-        used by elephants. That would require specialized microphones and speakers!
+        <strong>Note:</strong> ${t('home.about.limitations')}
       </p>
     </section>
   `;
@@ -162,7 +164,7 @@ function renderAboutSection(): string {
 function renderFooter(): string {
   return `
     <footer class="footer" role="contentinfo">
-      <p>Open source project · <a href="https://github.com/ISMAELMARTINEZ/yourear" target="_blank" rel="noopener noreferrer">GitHub <span class="sr-only">(opens in new tab)</span></a></p>
+      <p>${t('home.footer.openSource')} · <a href="https://github.com/ISMAELMARTINEZ/yourear" target="_blank" rel="noopener noreferrer">GitHub <span class="sr-only">(opens in new tab)</span></a></p>
     </footer>
   `;
 }
