@@ -123,18 +123,24 @@ export class Audiogram {
     ctx.fillStyle = COLORS.expectedRange;
     ctx.beginPath();
     
-    // Use all frequencies shown on the audiogram
-    const testFreqs = FREQUENCIES;
+    // Build points for top line (p10) and bottom line (p90)
+    const topPoints = FREQUENCIES.map(f => ({
+      x: this.freqToX(f),
+      y: this.dbToY(expected[f].p10)
+    }));
+    const bottomPoints = FREQUENCIES.map(f => ({
+      x: this.freqToX(f),
+      y: this.dbToY(expected[f].p90)
+    }));
     
-    // Top line (p10 - better hearing)
-    ctx.moveTo(this.freqToX(testFreqs[0]), this.dbToY(expected[testFreqs[0]].p10));
-    testFreqs.forEach(f => ctx.lineTo(this.freqToX(f), this.dbToY(expected[f].p10)));
-    
-    // Bottom line (p90 - worse hearing) - reverse order
-    for (let i = testFreqs.length - 1; i >= 0; i--) {
-      ctx.lineTo(this.freqToX(testFreqs[i]), this.dbToY(expected[testFreqs[i]].p90));
+    // Draw clockwise: top left → top right → bottom right → bottom left
+    ctx.moveTo(topPoints[0].x, topPoints[0].y);
+    for (let i = 1; i < topPoints.length; i++) {
+      ctx.lineTo(topPoints[i].x, topPoints[i].y);
     }
-    
+    for (let i = bottomPoints.length - 1; i >= 0; i--) {
+      ctx.lineTo(bottomPoints[i].x, bottomPoints[i].y);
+    }
     ctx.closePath();
     ctx.fill();
     
@@ -143,8 +149,14 @@ export class Audiogram {
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
     ctx.beginPath();
-    ctx.moveTo(this.freqToX(testFreqs[0]), this.dbToY(expected[testFreqs[0]].median));
-    testFreqs.forEach(f => ctx.lineTo(this.freqToX(f), this.dbToY(expected[f].median)));
+    const medianPoints = FREQUENCIES.map(f => ({
+      x: this.freqToX(f),
+      y: this.dbToY(expected[f].median)
+    }));
+    ctx.moveTo(medianPoints[0].x, medianPoints[0].y);
+    for (let i = 1; i < medianPoints.length; i++) {
+      ctx.lineTo(medianPoints[i].x, medianPoints[i].y);
+    }
     ctx.stroke();
     ctx.setLineDash([]);
   }
