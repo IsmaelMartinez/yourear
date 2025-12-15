@@ -4,8 +4,8 @@
 
 ```
 docs/
-├── README.md           # This file
-├── adr/                # Architecture Decision Records
+├── README.md              # This file
+├── adr/                   # Architecture Decision Records
 │   ├── 001-web-audio-api.md
 │   ├── 002-hughson-westlake-procedure.md
 │   ├── 003-test-frequencies.md
@@ -13,11 +13,15 @@ docs/
 │   ├── 005-no-wasm.md
 │   ├── 006-age-based-comparison.md
 │   └── 007-accessibility.md
-└── research/           # Research & Future Planning
-    ├── future-features.md
-    ├── code-improvements.md  # Technical debt analysis (✅ completed)
-    ├── hardware-limitations.md
-    └── clinical-accuracy.md
+├── research/              # Research & Future Planning
+│   ├── future-features.md       # Feature roadmap
+│   ├── code-improvements.md     # Technical debt (✅ completed)
+│   ├── hardware-limitations.md  # Physical constraints
+│   └── clinical-accuracy.md     # Comparison with clinical audiometry
+└── announcements/         # Launch Materials
+    ├── hacker-news.md           # Show HN post draft
+    ├── product-hunt.md          # Product Hunt launch materials
+    └── technical-blog-post.md   # Technical blog post
 ```
 
 ---
@@ -40,27 +44,54 @@ ADRs document significant technical decisions made during development.
 
 ## 🔬 Research Documents
 
-Research documents capture analysis and planning.
+Research documents capture analysis, competitive research, and planning.
 
 | Document | Description |
 |----------|-------------|
-| [Future Features](research/future-features.md) | Feature roadmap - many now implemented ✅ |
+| [Future Features](research/future-features.md) | Complete feature roadmap with priorities |
 | [Code Improvements](research/code-improvements.md) | Refactoring summary ✅ completed |
-| [Hardware Limitations](research/hardware-limitations.md) | Physical constraints of consumer audio hardware |
+| [Hardware Limitations](research/hardware-limitations.md) | Physical constraints of consumer audio |
 | [Clinical Accuracy](research/clinical-accuracy.md) | Comparison with professional audiometry |
 
 ---
 
-## 🚀 Quick Links
+## 🚀 Announcements
 
-### For Contributors
-- See [Future Features](research/future-features.md) for what to work on next
-- Check ADRs before making architectural changes
-- Follow existing patterns in codebase
+Launch materials and marketing content.
 
-### For Users
-- Understand [limitations](research/clinical-accuracy.md) of self-assessment
-- Learn about [hardware considerations](research/hardware-limitations.md)
+| Document | Description |
+|----------|-------------|
+| [Hacker News](announcements/hacker-news.md) | Show HN post with FAQ and comments |
+| [Product Hunt](announcements/product-hunt.md) | Full launch kit including social templates |
+| [Technical Blog Post](announcements/technical-blog-post.md) | Deep-dive on Web Audio API implementation |
+
+---
+
+## 🎯 Feature Status Overview
+
+### Implemented ✅
+- Pure-tone audiometry (Hughson-Westlake)
+- Speech-in-noise testing
+- Tinnitus frequency matcher
+- Profile history & comparison
+- PDF export
+- PWA/offline support
+- Ambient noise detection
+- Reference tone calibration
+- Headphone profiles (20+ models)
+- Multi-language (EN, ES, FR, DE, ZH)
+
+### Coming Soon ⏳
+- Masking noise
+- Test-retest reliability mode
+- Age-based normative comparison
+- Enhanced results visualization
+
+### Future 🔮
+- Real-time hearing compensation
+- Hearing aid simulation
+- Machine learning calibration
+- Telehealth integration
 
 ---
 
@@ -89,3 +120,28 @@ Research documents capture analysis and planning.
 1. Create file in `docs/research/`
 2. Include: Overview, Analysis, Recommendations, References
 
+### New Announcement
+1. Create file in `docs/announcements/`
+2. Include target platform, content, and posting guidelines
+
+---
+
+## 🔗 Quick Links
+
+### For Contributors
+- See [Future Features](research/future-features.md) for what to work on next
+- Check ADRs before making architectural changes
+- Follow existing patterns in codebase
+
+### For Users
+- Understand [limitations](research/clinical-accuracy.md) of self-assessment
+- Learn about [hardware considerations](research/hardware-limitations.md)
+
+### For Launch
+- [Hacker News](announcements/hacker-news.md) Show HN post
+- [Product Hunt](announcements/product-hunt.md) launch materials
+- [Technical blog](announcements/technical-blog-post.md) for dev.to
+
+---
+
+*Last updated: December 2024*

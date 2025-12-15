@@ -15,6 +15,7 @@ import { renderComparison } from './screens/comparison';
 import { renderTinnitus, cleanupTinnitusScreen } from './screens/tinnitus';
 import { renderSpeechNoise, cleanupSpeechNoiseScreen } from './screens/speech-noise';
 import { createProfile, getAllProfiles } from './storage/profile';
+import { initI18n, setLocaleChangeCallback, getLocale } from './i18n';
 
 // ============================================
 // Screen Router
@@ -103,6 +104,13 @@ function seedDemoProfile(): void {
 // ============================================
 // Initialize Application
 // ============================================
+
+// Initialize i18n system
+initI18n();
+setLocaleChangeCallback(render);
+
+// Set document language
+document.documentElement.lang = getLocale();
 
 // Set up render callbacks
 setRenderCallback(render);
