@@ -29,6 +29,6 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "jspdf": "^3.0.4"
+    "jspdf": "^4.0.0"
   }
 }
