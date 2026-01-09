@@ -143,3 +143,6 @@ Standard microphones cannot capture frequencies above ~20 kHz.
 - Could partner with headphone manufacturers for device-specific calibration profiles
 - Some hearing aid companies have APIs for integration
 
+
+
+

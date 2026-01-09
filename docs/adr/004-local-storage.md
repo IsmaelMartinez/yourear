@@ -48,3 +48,6 @@ function saveProfile(profile: HearingProfile): void {
 - Consider IndexedDB if storing audio recordings
 - Optional account system for cross-device sync
 
+
+
+

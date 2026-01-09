@@ -43,3 +43,6 @@ panner.pan.value = channel === 'left' ? -1 : 1;
 oscillator.connect(gainNode).connect(panner).connect(ctx.destination);
 ```
 
+
+
+

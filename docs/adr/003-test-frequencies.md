@@ -47,3 +47,6 @@ Need to decide which frequencies to test. Clinical audiometry typically tests 12
 - Skip inter-octave frequencies (750, 1500, 3000, 6000 Hz)
 - May miss narrow-band hearing loss between tested frequencies
 
+
+
+
