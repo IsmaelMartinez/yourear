@@ -38,16 +38,16 @@ export function renderHome(): void {
         <div class="flex-buttons" role="group" aria-label="Test options">
           <button class="btn btn--primary btn--large" id="start-full-test" aria-describedby="full-test-desc">
             <span aria-hidden="true">🎵</span> Full Test
-            <span id="full-test-desc" style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">6 frequencies · ~8 min</span>
+            <span id="full-test-desc" class="btn__sublabel">6 frequencies · ~8 min</span>
           </button>
           <button class="btn btn--secondary btn--large" id="start-quick-test" aria-describedby="quick-test-desc">
             <span aria-hidden="true">⚡</span> Quick Test
-            <span id="quick-test-desc" style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">3 frequencies · ~2 min</span>
+            <span id="quick-test-desc" class="btn__sublabel">3 frequencies · ~2 min</span>
           </button>
         </div>
-        <button class="btn btn--secondary mt-md" id="start-detailed-test" aria-describedby="detailed-test-desc" style="width: 100%;">
+        <button class="btn btn--secondary mt-md w-full" id="start-detailed-test" aria-describedby="detailed-test-desc">
           <span aria-hidden="true">🔬</span> Detailed Test
-          <span id="detailed-test-desc" style="display: inline; font-size: 0.75rem; opacity: 0.8; font-weight: normal; margin-left: 0.5rem;">11 frequencies incl. inter-octave · ~15 min</span>
+          <span id="detailed-test-desc" class="btn__sublabel">11 frequencies incl. inter-octave · ~15 min</span>
         </button>
         
         <div class="disclaimer" role="alert">
@@ -115,7 +115,7 @@ function renderTestHistory(profiles: HearingProfile[]): string {
         `).join('')}
       </nav>
       ${profiles.length >= 2 ? `
-        <button class="btn btn--secondary mt-md" id="compare-tests" style="width: 100%;">
+        <button class="btn btn--secondary mt-md w-full" id="compare-tests">
           <span aria-hidden="true">📈</span> Compare Tests Over Time
         </button>
       ` : ''}
@@ -127,14 +127,14 @@ function renderToolsSection(): string {
   return `
     <section class="card" aria-labelledby="tools-title">
       <h2 class="card__title" id="tools-title"><span aria-hidden="true">🛠️</span> Other Tools</h2>
-      <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
-        <button class="btn btn--secondary" id="speech-noise-test" style="width: 100%;">
+      <div class="flex-col-gap">
+        <button class="btn btn--secondary w-full" id="speech-noise-test">
           <span aria-hidden="true">🗣️</span> Speech-in-Noise Test
-          <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">Test hearing in noisy environments · ~4 min</span>
+          <span class="btn__sublabel">Test hearing in noisy environments · ~4 min</span>
         </button>
-        <button class="btn btn--secondary" id="tinnitus-matcher" style="width: 100%;">
+        <button class="btn btn--secondary w-full" id="tinnitus-matcher">
           <span aria-hidden="true">🔔</span> Tinnitus Frequency Matcher
-          <span style="display: block; font-size: 0.75rem; opacity: 0.8; font-weight: normal;">Identify your tinnitus frequency</span>
+          <span class="btn__sublabel">Identify your tinnitus frequency</span>
         </button>
       </div>
     </section>

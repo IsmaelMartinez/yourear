@@ -1,49 +1,14 @@
 /**
  * Pure tone generator for audiometry
- * 
+ *
  * Uses the Web Audio API to generate precise sine wave tones
  * at specific frequencies for hearing threshold testing.
  */
 
-// AudioContext singleton - created on first use to comply with autoplay policies
-let audioContext: AudioContext | null = null;
+import { ensureRunning } from './audio-context';
 
-/** Error thrown when audio cannot be initialized */
-export class AudioInitError extends Error {
-  constructor(message: string, public readonly cause?: unknown) {
-    super(message);
-    this.name = 'AudioInitError';
-  }
-}
-
-function getAudioContext(): AudioContext {
-  if (!audioContext) {
-    try {
-      audioContext = new AudioContext();
-    } catch (error) {
-      throw new AudioInitError(
-        'Could not initialize audio. Please ensure your browser supports Web Audio API.',
-        error
-      );
-    }
-  }
-  return audioContext;
-}
-
-async function ensureRunning(): Promise<AudioContext> {
-  const ctx = getAudioContext();
-  if (ctx.state === 'suspended') {
-    try {
-      await ctx.resume();
-    } catch (error) {
-      throw new AudioInitError(
-        'Could not resume audio context. Please interact with the page and try again.',
-        error
-      );
-    }
-  }
-  return ctx;
-}
+// Re-export for consumers that imported AudioInitError from here
+export { AudioInitError } from './audio-context';
 
 // Active tone tracking
 let activeOscillator: OscillatorNode | null = null;

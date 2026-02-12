@@ -2,15 +2,7 @@
  * Tinnitus tone generator - continuous adjustable tone for frequency matching
  */
 
-// AudioContext singleton (shared with tone-generator.ts)
-let audioContext: AudioContext | null = null;
-
-function getAudioContext(): AudioContext {
-  if (!audioContext) {
-    audioContext = new AudioContext();
-  }
-  return audioContext;
-}
+import { getAudioContext } from './audio-context';
 
 // Active nodes
 let oscillator: OscillatorNode | null = null;

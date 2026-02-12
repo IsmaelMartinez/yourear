@@ -42,12 +42,13 @@ export function renderTest(): void {
   const freqUnit = state.currentFrequency >= 1000 ? 'kHz' : 'Hz';
   const freqSpoken = formatFrequency(state.currentFrequency, 'spoken');
   
-  const isQuick = testMode === 'quick';
-  
+  const modeIcon = { quick: '⚡', full: '🎵', detailed: '🔬' }[testMode];
+  const modeLabel = { quick: 'Quick', full: 'Full', detailed: 'Detailed' }[testMode];
+
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Hearing Test in Progress">
       <header class="header" role="banner" style="margin-bottom: var(--spacing-lg);">
-        <h1 class="header__title" style="font-size: 1.5rem;"><span aria-hidden="true">${isQuick ? '⚡' : '🎵'}</span> ${isQuick ? 'Quick' : 'Full'} Test</h1>
+        <h1 class="header__title" style="font-size: 1.5rem;"><span aria-hidden="true">${modeIcon}</span> ${modeLabel} Test</h1>
       </header>
       
       <section class="card card--glow" aria-labelledby="test-status-title">

@@ -51,11 +51,6 @@ export function createProfile(profile: Omit<HearingProfile, 'id'>): HearingProfi
 }
 
 /**
- * @deprecated Use createProfile instead. This alias exists for backwards compatibility.
- */
-export const saveProfile = createProfile;
-
-/**
  * Get the most recently created profile
  * @returns Latest profile or null if no profiles exist
  */
