@@ -7,15 +7,16 @@ import { playCalibrationTone, stopTone } from '../audio/tone-generator';
 import { getState, navigateTo, setUserAge } from '../state/app-state';
 import { startTest } from '../services/test-runner';
 
+const MODE_CONFIG = {
+  quick:    { icon: '⚡', label: 'Quick Test',    subtitle: '3 frequencies · ~2 minutes' },
+  full:     { icon: '🔊', label: 'Full Test',     subtitle: '6 frequencies · ~8 minutes' },
+  detailed: { icon: '🔬', label: 'Detailed Test', subtitle: '11 frequencies · ~15 minutes' },
+} as const;
+
 export function renderCalibration(): void {
   const app = getAppContainer();
   const { testMode, userAge } = getState();
-
-  const modeConfig = {
-    quick:    { icon: '⚡', label: 'Quick Test',    subtitle: '3 frequencies · ~2 minutes' },
-    full:     { icon: '🔊', label: 'Full Test',     subtitle: '6 frequencies · ~8 minutes' },
-    detailed: { icon: '🔬', label: 'Detailed Test', subtitle: '11 frequencies · ~15 minutes' },
-  }[testMode];
+  const modeConfig = MODE_CONFIG[testMode];
 
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="${modeConfig.label} Setup">

@@ -2,7 +2,7 @@
  * Tinnitus tone generator - continuous adjustable tone for frequency matching
  */
 
-import { getAudioContext } from './audio-context';
+import { ensureRunning } from './audio-context';
 
 // Active nodes
 let oscillator: OscillatorNode | null = null;
@@ -35,13 +35,10 @@ function dbToGain(db: number): number {
 /**
  * Start playing the tinnitus matching tone
  */
-export function startTinnitusTone(): void {
+export async function startTinnitusTone(): Promise<void> {
   if (oscillator) return; // Already playing
-  
-  const ctx = getAudioContext();
-  if (ctx.state === 'suspended') {
-    ctx.resume();
-  }
+
+  const ctx = await ensureRunning();
   
   oscillator = ctx.createOscillator();
   oscillator.type = 'sine';

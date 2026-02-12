@@ -6,6 +6,9 @@ import { getAppContainer, onClick, announce } from '../utils/dom';
 import { getState, navigateTo } from '../state/app-state';
 import { formatFrequency } from '../types';
 
+const MODE_ICONS = { quick: '⚡', full: '🎵', detailed: '🔬' } as const;
+const MODE_LABELS = { quick: 'Quick', full: 'Full', detailed: 'Detailed' } as const;
+
 // Global keydown handler reference
 let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
 
@@ -42,8 +45,8 @@ export function renderTest(): void {
   const freqUnit = state.currentFrequency >= 1000 ? 'kHz' : 'Hz';
   const freqSpoken = formatFrequency(state.currentFrequency, 'spoken');
   
-  const modeIcon = { quick: '⚡', full: '🎵', detailed: '🔬' }[testMode];
-  const modeLabel = { quick: 'Quick', full: 'Full', detailed: 'Detailed' }[testMode];
+  const modeIcon = MODE_ICONS[testMode];
+  const modeLabel = MODE_LABELS[testMode];
 
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Hearing Test in Progress">

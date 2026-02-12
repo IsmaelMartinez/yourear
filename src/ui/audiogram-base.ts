@@ -5,7 +5,7 @@
  * ~120 lines of identical grid/label/marker drawing code.
  */
 
-import { HearingThreshold, TEST_FREQUENCIES, formatFrequency } from '../types';
+import { HearingThreshold, formatFrequency } from '../types';
 
 /**
  * Colors for audiogram rendering
@@ -140,8 +140,9 @@ export abstract class AudiogramBase {
     const rightPoints: { x: number; y: number }[] = [];
     const leftPoints: { x: number; y: number }[] = [];
 
+    // Plot all thresholds present in the profile -- no frequency whitelist,
+    // so extended/inter-octave frequencies from detailed tests are drawn too.
     thresholds.forEach(t => {
-      if (!TEST_FREQUENCIES.includes(t.frequency as typeof TEST_FREQUENCIES[number])) return;
       const x = this.freqToX(t.frequency);
       if (t.rightEar !== null) rightPoints.push({ x, y: this.dbToY(t.rightEar) });
       if (t.leftEar !== null) leftPoints.push({ x, y: this.dbToY(t.leftEar) });
@@ -151,7 +152,6 @@ export abstract class AudiogramBase {
     this.drawLine(leftPoints, leftColor);
 
     thresholds.forEach(t => {
-      if (!TEST_FREQUENCIES.includes(t.frequency as typeof TEST_FREQUENCIES[number])) return;
       const x = this.freqToX(t.frequency);
       if (t.rightEar !== null) this.drawCircle(x, this.dbToY(t.rightEar), rightColor, markerSize);
       if (t.leftEar !== null) this.drawX(x, this.dbToY(t.leftEar), leftColor, markerSize);

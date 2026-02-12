@@ -17,6 +17,8 @@ YourEar plays pure tones through your headphones and measures the quietest level
 
 All data stays in your browser's local storage. Works offline as a PWA.
 
+Built with **TypeScript**, **Vite**, the **Web Audio API** (tone synthesis), and the **Canvas API** (audiogram charts). No heavy frameworks -- just ~450 KB of production JS.
+
 ## Getting started
 
 Grab headphones, open the link above, and tap "Full Test". That's it.

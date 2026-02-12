@@ -5,7 +5,7 @@
  * Tests ability to understand speech at various signal-to-noise ratios (SNR).
  */
 
-import { getAudioContext } from './audio-context';
+import { ensureRunning } from './audio-context';
 
 let noiseNode: AudioBufferSourceNode | null = null;
 let noiseGain: GainNode | null = null;
@@ -46,13 +46,10 @@ function createPinkNoiseBuffer(ctx: AudioContext, duration: number): AudioBuffer
 /**
  * Start playing background noise
  */
-export function startNoise(volumeDb: number = 0): void {
+export async function startNoise(volumeDb: number = 0): Promise<void> {
   stopNoise();
-  
-  const ctx = getAudioContext();
-  if (ctx.state === 'suspended') {
-    ctx.resume();
-  }
+
+  const ctx = await ensureRunning();
   
   // Create 10 seconds of looping noise
   const noiseBuffer = createPinkNoiseBuffer(ctx, 10);
