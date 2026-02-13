@@ -842,7 +842,7 @@ body::before {
   }
 }
 
-/* Utility classes for repeated inline styles */
+/* Utility classes */
 .text-secondary-lg {
   color: var(--text-secondary);
   line-height: 1.8;
@@ -858,8 +858,83 @@ body::before {
   text-align: center;
 }
 
+.text-secondary {
+  color: var(--text-secondary);
+}
+
 .mt-md {
   margin-top: var(--spacing-md);
+}
+
+.mt-lg {
+  margin-top: var(--spacing-lg);
+}
+
+.w-full {
+  width: 100%;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-2 {
+  flex: 2;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+/* Age input on calibration screen */
+.age-input {
+  width: 120px;
+  padding: var(--spacing-md);
+  font-size: 1.5rem;
+  text-align: center;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.age-input-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: var(--spacing-lg) 0;
+}
+
+.age-unit {
+  padding: var(--spacing-md);
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+
+/* Ear test buttons */
+.btn--right-ear {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: var(--accent-right);
+}
+
+.btn--left-ear {
+  background: rgba(78, 205, 196, 0.1);
+  border-color: var(--accent-left);
+}
+
+/* Sub-label under buttons */
+.btn__sublabel {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: normal;
+}
+
+.flex-col-gap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
 .flex-buttons {

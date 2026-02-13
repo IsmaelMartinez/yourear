@@ -1,21 +1,14 @@
 /**
  * Speech-in-Noise Test Audio
- * 
+ *
  * Generates background noise and uses Web Speech API for speech synthesis.
  * Tests ability to understand speech at various signal-to-noise ratios (SNR).
  */
 
-// AudioContext singleton
-let audioContext: AudioContext | null = null;
+import { ensureRunning } from './audio-context';
+
 let noiseNode: AudioBufferSourceNode | null = null;
 let noiseGain: GainNode | null = null;
-
-function getAudioContext(): AudioContext {
-  if (!audioContext) {
-    audioContext = new AudioContext();
-  }
-  return audioContext;
-}
 
 /**
  * Generate pink noise buffer (more natural than white noise)
@@ -53,13 +46,10 @@ function createPinkNoiseBuffer(ctx: AudioContext, duration: number): AudioBuffer
 /**
  * Start playing background noise
  */
-export function startNoise(volumeDb: number = 0): void {
+export async function startNoise(volumeDb: number = 0): Promise<void> {
   stopNoise();
-  
-  const ctx = getAudioContext();
-  if (ctx.state === 'suspended') {
-    ctx.resume();
-  }
+
+  const ctx = await ensureRunning();
   
   // Create 10 seconds of looping noise
   const noiseBuffer = createPinkNoiseBuffer(ctx, 10);
@@ -87,15 +77,6 @@ export function stopNoise(): void {
   if (noiseGain) {
     noiseGain.disconnect();
     noiseGain = null;
-  }
-}
-
-/**
- * Adjust noise volume in real-time
- */
-export function setNoiseVolume(volumeDb: number): void {
-  if (noiseGain) {
-    noiseGain.gain.value = Math.pow(10, (volumeDb - 30) / 20);
   }
 }
 

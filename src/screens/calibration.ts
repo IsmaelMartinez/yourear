@@ -7,81 +7,76 @@ import { playCalibrationTone, stopTone } from '../audio/tone-generator';
 import { getState, navigateTo, setUserAge } from '../state/app-state';
 import { startTest } from '../services/test-runner';
 
+const MODE_CONFIG = {
+  quick:    { icon: '⚡', label: 'Quick Test',    subtitle: '3 frequencies · ~2 minutes' },
+  full:     { icon: '🔊', label: 'Full Test',     subtitle: '6 frequencies · ~8 minutes' },
+  detailed: { icon: '🔬', label: 'Detailed Test', subtitle: '11 frequencies · ~15 minutes' },
+} as const;
+
 export function renderCalibration(): void {
   const app = getAppContainer();
   const { testMode, userAge } = getState();
-  const isQuick = testMode === 'quick';
-  
+  const modeConfig = MODE_CONFIG[testMode];
+
   app.innerHTML = `
-    <main id="main-content" class="screen" tabindex="-1" aria-label="${isQuick ? 'Quick' : 'Full'} Test Setup">
+    <main id="main-content" class="screen" tabindex="-1" aria-label="${modeConfig.label} Setup">
       <header class="header" role="banner">
-        <div class="header__logo" aria-hidden="true">${isQuick ? '⚡' : '🔊'}</div>
-        <h1 class="header__title">${isQuick ? 'Quick Test' : 'Full Test'} Setup</h1>
-        <p class="header__subtitle">${isQuick ? '3 frequencies · ~2 minutes' : '6 frequencies · ~8 minutes'}</p>
+        <div class="header__logo" aria-hidden="true">${modeConfig.icon}</div>
+        <h1 class="header__title">${modeConfig.label} Setup</h1>
+        <p class="header__subtitle">${modeConfig.subtitle}</p>
       </header>
       
       <section class="card card--glow" aria-labelledby="age-section-title">
         <div class="calibration">
-          <h2 class="card__title" id="age-section-title" style="justify-content: center;"><span aria-hidden="true">👤</span> Your Age</h2>
-          <p id="age-description" class="text-center" style="color: var(--text-secondary);">
+          <h2 class="card__title justify-center" id="age-section-title"><span aria-hidden="true">👤</span> Your Age</h2>
+          <p id="age-description" class="text-center text-secondary">
             Enter your age to compare your results with expected values for your age group.
           </p>
-          
-          <div style="display: flex; justify-content: center; align-items: center; margin: var(--spacing-lg) 0;">
+
+          <div class="age-input-group">
             <label for="age-input" class="sr-only">Your age in years</label>
-            <input type="number" id="age-input" min="5" max="120" value="${userAge || ''}" 
-              placeholder="Age" 
+            <input type="number" id="age-input" class="age-input" min="5" max="120" value="${userAge || ''}"
+              placeholder="Age"
               aria-describedby="age-description"
               autocomplete="off"
-              style="
-                width: 120px;
-                padding: var(--spacing-md);
-                font-size: 1.5rem;
-                text-align: center;
-                background: var(--bg-tertiary);
-                border: 2px solid var(--border-color);
-                border-radius: var(--radius-md);
-                color: var(--text-primary);
-                font-family: var(--font-mono);
-              "
             />
-            <span style="padding: var(--spacing-md); font-size: 1.2rem; color: var(--text-muted);" aria-hidden="true">years</span>
+            <span class="age-unit" aria-hidden="true">years</span>
           </div>
         </div>
       </section>
-      
+
       <section class="card" aria-labelledby="headphone-section-title">
         <div class="calibration">
-          <h2 class="card__title" id="headphone-section-title" style="justify-content: center;"><span aria-hidden="true">🎧</span> Test Your Headphones</h2>
-          <p id="headphone-description" class="text-center" style="color: var(--text-secondary);">
+          <h2 class="card__title justify-center" id="headphone-section-title"><span aria-hidden="true">🎧</span> Test Your Headphones</h2>
+          <p id="headphone-description" class="text-center text-secondary">
             Click each button to play a test tone. Adjust your volume until comfortable.
           </p>
-          
+
           <div class="calibration__ear-buttons" role="group" aria-label="Ear test buttons">
-            <button class="btn btn--secondary" id="test-right" style="background: rgba(255, 107, 107, 0.1); border-color: var(--accent-right);" aria-describedby="headphone-description">
+            <button class="btn btn--secondary btn--right-ear" id="test-right" aria-describedby="headphone-description">
               <span aria-hidden="true">◯</span> Right Ear
             </button>
-            <button class="btn btn--secondary" id="test-left" style="background: rgba(78, 205, 196, 0.1); border-color: var(--accent-left);" aria-describedby="headphone-description">
+            <button class="btn btn--secondary btn--left-ear" id="test-left" aria-describedby="headphone-description">
               <span aria-hidden="true">✕</span> Left Ear
             </button>
           </div>
-          
+
           <p class="calibration__tip" role="note"><span aria-hidden="true">💡</span> Make sure both ears can hear the test tones!</p>
         </div>
       </section>
-      
+
       <nav class="nav-buttons" aria-label="Test navigation">
-        <button class="btn btn--secondary" id="back-home" style="flex: 1;">
+        <button class="btn btn--secondary flex-1" id="back-home">
           <span aria-hidden="true">←</span> Back
         </button>
-        <button class="btn btn--primary btn--large" id="begin-test" style="flex: 2;">
+        <button class="btn btn--primary btn--large flex-2" id="begin-test">
           I'm ready - Begin Test <span aria-hidden="true">→</span>
         </button>
       </nav>
     </main>
   `;
   
-  announce(`${isQuick ? 'Quick' : 'Full'} test setup. Enter your age and test your headphones before starting.`);
+  announce(`${modeConfig.label} setup. Enter your age and test your headphones before starting.`);
   
   // Track age changes
   onChange('age-input', (value) => {
