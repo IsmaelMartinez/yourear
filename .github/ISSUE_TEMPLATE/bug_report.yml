@@ -24,3 +24,5 @@ body:
     attributes:
       label: Environment
       description: "Browser, OS, device, or any relevant setup details."
+    validations:
+      required: true
