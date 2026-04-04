@@ -29,6 +29,9 @@
     "vitest": "^4.0.15"
   },
   "dependencies": {
-    "jspdf": "^3.0.4"
+    "jspdf": "^4.2.1"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.5"
   }
 }
