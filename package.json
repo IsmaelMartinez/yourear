@@ -22,7 +22,7 @@
   "license": "MIT",
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.15",
-    "jsdom": "^27.3.0",
+    "jsdom": "^29.0.1",
     "typescript": "^5.3.3",
     "vite": "^7.3.0",
     "vite-plugin-pwa": "^1.2.0",
