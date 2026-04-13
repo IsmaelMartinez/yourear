@@ -10,7 +10,7 @@
 | **Extended Frequencies** | Detailed test with 11 frequencies including inter-octave |
 | **Speech-in-Noise Test** | Measure hearing in noise using Web Speech API + pink noise |
 | **Tinnitus Matcher** | Identify tinnitus frequency (100Hz-12kHz) and loudness |
-| **TypeScript 6 + Vite 8** | Major toolchain upgrade (Rolldown bundler, ~6x faster builds) |
+| **TypeScript 6** | Major toolchain upgrade (final JS-based compiler release) |
 
 ---
 
@@ -27,11 +27,13 @@
  ├── Tinnitus frequency matcher
  ├── Speech-in-noise test
  ├── PWA offline support
- └── TypeScript 6 + Vite 8 (Rolldown)
+ └── TypeScript 6
 
  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
 
  PHASE 1 — ACCURACY & TRUST          ~8-10 hrs        🎯 Next up
+ │
+ │  ⏳ Vite 8 upgrade blocked on vite-plugin-pwa peer dep support
  │
  ├─► Environmental Noise Check                         ~2 hrs
  │   Use microphone to detect background noise
