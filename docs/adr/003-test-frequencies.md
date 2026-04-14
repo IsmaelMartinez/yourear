@@ -4,46 +4,59 @@
 Accepted
 
 ## Context
-Need to decide which frequencies to test. Clinical audiometry typically tests 125-8000 Hz at octave intervals.
+Need to decide which frequencies to test. Clinical audiometry typically tests 125–8000 Hz at octave intervals, with inter-octave frequencies (750, 1500, 3000, 6000 Hz) used when pure-tone averages fall between octaves or when more resolution is needed.
 
 ## Decision
-### Full Test (6 frequencies)
-- 250, 500, 1000, 2000, 4000, 8000 Hz
-- Duration: ~8 minutes
+Offer three test modes with different frequency coverage/time trade-offs.
 
-### Quick Test (3 frequencies)
+### Quick Test (3 frequencies, ~2 min)
 - 1000, 4000, 8000 Hz
-- Duration: ~2 minutes
+
+### Full Test (6 frequencies, ~8 min)
+- 250, 500, 1000, 2000, 4000, 8000 Hz
+
+### Detailed Test (11 frequencies, ~15 min)
+- 125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000 Hz
 
 ## Rationale
 
-### Why these 6 frequencies for full test?
+### Why these frequencies?
 | Frequency | Importance |
 |-----------|------------|
+| 125 Hz | Very low bass, reproduction quality varies by headphones |
 | 250 Hz | Low frequency, vowel sounds |
 | 500 Hz | Speech range, PTA calculation |
+| 750 Hz | Inter-octave, detects narrow-band loss |
 | 1000 Hz | Reference frequency, PTA calculation |
+| 1500 Hz | Inter-octave, speech intelligibility |
 | 2000 Hz | Consonant sounds, PTA calculation |
-| 4000 Hz | First to show noise/age damage |
+| 3000 Hz | Inter-octave, noise-induced loss indicator |
+| 4000 Hz | First to show noise/age damage ("noise notch") |
+| 6000 Hz | Inter-octave, high-frequency loss |
 | 8000 Hz | High frequency indicator |
 
-### Why these 3 for quick test?
-- **1000 Hz** - Most sensitive frequency, reference standard
-- **4000 Hz** - "Noise notch" frequency, earliest age-related loss
-- **8000 Hz** - High frequency hearing indicator
+### Why these 3 for Quick Test?
+- **1000 Hz** — Most sensitive frequency, reference standard
+- **4000 Hz** — "Noise notch" frequency, earliest age-related loss
+- **8000 Hz** — High frequency hearing indicator
 
-### Why skip 125 Hz?
-- Consumer headphones often can't reproduce accurately
+### Why offer a Detailed Test?
+- Captures narrow-band losses that fall between octave frequencies
+- Better matches extended clinical audiograms
+- Useful for tinnitus frequency context (tinnitus often sits between octave points)
+
+### Why 125 Hz only in Detailed?
+- Consumer headphones often can't reproduce 125 Hz accurately
 - Less clinically significant for typical hearing issues
-- Adds time without proportional value
+- Keeps the Full Test focused on the most diagnostic frequencies
 
 ## Consequences
 ### Positive
-- Quick test catches 90% of issues in 25% of time
-- Full test matches clinical audiometry frequencies
-- PTA (Pure Tone Average) can be calculated from 500, 1000, 2000 Hz
+- Quick Test catches common issues in ~25% of Full Test time
+- Full Test matches clinical audiometry's standard octave frequencies
+- Detailed Test adds inter-octave resolution when users want it
+- PTA (Pure Tone Average) can be calculated from 500, 1000, 2000 Hz in all three modes
 
 ### Negative
-- Skip inter-octave frequencies (750, 1500, 3000, 6000 Hz)
-- May miss narrow-band hearing loss between tested frequencies
-
+- More modes = more UI/UX surface to maintain
+- Inter-octave frequencies (125, 750, 1500, 3000, 6000 Hz) stress consumer hardware limits

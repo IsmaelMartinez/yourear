@@ -61,7 +61,7 @@ export function renderResults(): void {
       </nav>
       
       <footer class="footer" role="contentinfo">
-        <p>Open source project · <a href="https://github.com/ISMAELMARTINEZ/yourear" target="_blank" rel="noopener noreferrer">GitHub <span class="sr-only">(opens in new tab)</span></a></p>
+        <p>Open source project · <a href="https://github.com/IsmaelMartinez/yourear" target="_blank" rel="noopener noreferrer">GitHub <span class="sr-only">(opens in new tab)</span></a></p>
       </footer>
     </main>
   `;
