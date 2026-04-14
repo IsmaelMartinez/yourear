@@ -6,7 +6,7 @@ Contributions are welcome! This document provides guidelines for contributing to
 
 ```bash
 # Clone the repository
-git clone https://github.com/ISMAELMARTINEZ/yourear.git
+git clone https://github.com/IsmaelMartinez/yourear.git
 cd yourear
 
 # Install dependencies

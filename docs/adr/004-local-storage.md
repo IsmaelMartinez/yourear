@@ -36,10 +36,12 @@ Use **LocalStorage** with JSON serialization.
 ```typescript
 const STORAGE_KEY = 'yourear_profiles';
 
-function saveProfile(profile: HearingProfile): void {
+function createProfile(profile: Omit<HearingProfile, 'id'>): HearingProfile {
   const profiles = getAllProfiles();
-  profiles.push({ ...profile, id: generateId() });
+  const newProfile: HearingProfile = { ...profile, id: generateId() };
+  profiles.push(newProfile);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
+  return newProfile;
 }
 ```
 

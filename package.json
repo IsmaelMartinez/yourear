@@ -18,7 +18,7 @@
     "audiogram",
     "hearing-test"
   ],
-  "author": "ISMAELMARTINEZ",
+  "author": "Ismael Martinez",
   "license": "MIT",
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.15",

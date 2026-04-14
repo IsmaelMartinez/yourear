@@ -26,7 +26,7 @@ Grab headphones, open the link above, and tap "Full Test". That's it.
 To run locally:
 
 ```bash
-git clone https://github.com/ISMAELMARTINEZ/yourear.git
+git clone https://github.com/IsmaelMartinez/yourear.git
 cd yourear
 npm install
 npm run dev
