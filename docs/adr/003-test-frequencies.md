@@ -59,4 +59,4 @@ Offer three test modes with different frequency coverage/time trade-offs.
 
 ### Negative
 - More modes = more UI/UX surface to maintain
-- Inter-octave frequencies (125, 750, 1500, 3000, 6000 Hz) stress consumer hardware limits
+- Extended frequencies (125 Hz at the low end; 750, 1500, 3000, 6000 Hz between octaves) stress consumer hardware limits
