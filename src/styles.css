@@ -549,6 +549,56 @@ body::before {
   margin-top: var(--spacing-md);
 }
 
+/* Environmental noise meter */
+.noise-meter {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.noise-meter__readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  font-family: var(--font-mono);
+}
+
+.noise-meter__value {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--accent-success);
+  transition: color var(--transition-fast);
+}
+
+.noise-meter__unit {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.noise-meter__message {
+  margin-top: var(--spacing-sm);
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.noise-meter--warning {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.3);
+}
+
+.noise-meter--warning .noise-meter__value {
+  color: var(--accent-warning);
+}
+
+.noise-meter--warning .noise-meter__message {
+  color: var(--accent-warning);
+}
+
 /* Profile history */
 .profiles {
   margin-top: var(--spacing-xl);

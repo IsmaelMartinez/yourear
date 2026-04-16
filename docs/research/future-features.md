@@ -11,6 +11,7 @@
 | **Speech-in-Noise Test** | Measure hearing in noise using Web Speech API + pink noise |
 | **Tinnitus Matcher** | Identify tinnitus frequency (100Hz-12kHz) and loudness |
 | **TypeScript 6** | Major toolchain upgrade (final JS-based compiler release) |
+| **Environmental Noise Check** | Optional mic-based ambient noise meter on the calibration screen |
 
 ---
 
@@ -31,13 +32,13 @@
 
  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
 
- PHASE 1 — ACCURACY & TRUST          ~8-10 hrs        🎯 Next up
+ PHASE 1 — ACCURACY & TRUST          ~6-8 hrs         🎯 In progress
  │
  │  ⏳ Vite 8 upgrade blocked on vite-plugin-pwa peer dep support
  │
- ├─► Environmental Noise Check                         ~2 hrs
- │   Use microphone to detect background noise
- │   and warn if environment is too loud (>40 dB).
+ ├─► Environmental Noise Check                         ✅ Done
+ │   Mic-based ambient noise meter on the calibration
+ │   screen; warns when peak > 40 dB SPL.
  │
  ├─► Reference Tone Calibration                        ~3-4 hrs
  │   "Adjust until this matches conversational speech"
@@ -80,13 +81,14 @@
 
 ### Phase 1 — Accuracy & Trust
 
-#### Environmental Noise Check
-**Effort:** ~2 hours
+#### Environmental Noise Check ✅
 
-Use the browser microphone API to sample ambient noise before testing:
-- Warn if background noise exceeds ~40 dB
-- Suggest quieter environment or time of day
-- Optional: continuous monitoring during test
+Implemented in `src/audio/noise-meter.ts` and surfaced on the calibration screen:
+- Optional, one-click mic check before the test
+- Live readout + running peak (approximate dB SPL)
+- Warns when peak exceeds `NOISE_WARNING_THRESHOLD_DB` (40 dB)
+- Non-blocking: user can proceed regardless
+- Uncalibrated — consumer mics can't give true SPL, good enough to flag obviously noisy rooms
 
 #### Reference Tone Calibration
 **Effort:** ~3-4 hours
