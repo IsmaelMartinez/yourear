@@ -12,7 +12,7 @@
  * meter replacement.
  */
 
-import { getAudioContext, AudioInitError } from './audio-context';
+import { ensureRunning, AudioInitError } from './audio-context';
 
 /** Approximate offset that maps 0 dBFS -> ~94 dB SPL on typical consumer mics. */
 const SPL_OFFSET_DB = 94;
@@ -72,7 +72,7 @@ export async function startNoiseMeter(
     );
   }
 
-  const ctx = getAudioContext();
+  const ctx = await ensureRunning();
   const source = ctx.createMediaStreamSource(stream);
   const analyser = ctx.createAnalyser();
   analyser.fftSize = FFT_SIZE;

@@ -61,7 +61,7 @@ export function renderCalibration(): void {
             <span aria-hidden="true">🎙️</span> Check Ambient Noise
           </button>
 
-          <div id="noise-status" class="noise-meter" role="status" aria-live="polite" hidden>
+          <div id="noise-status" class="noise-meter" hidden>
             <div class="noise-meter__readout">
               <span class="noise-meter__value" id="noise-value">--</span>
               <span class="noise-meter__unit" aria-hidden="true">dB</span>
@@ -143,13 +143,25 @@ export function renderCalibration(): void {
     button.disabled = true;
     button.innerHTML = '<span aria-hidden="true">⏳</span> Requesting microphone…';
     try {
+      let lastNoisy: boolean | null = null;
       noiseMeter = await startNoiseMeter((sample) => {
-        value.textContent = sample.db.toFixed(0);
+        const dbStr = sample.db.toFixed(0);
+        if (value.textContent !== dbStr) value.textContent = dbStr;
+
+        const peakStr = sample.peakDb.toFixed(0);
         const noisy = sample.peakDb > NOISE_WARNING_THRESHOLD_DB;
-        status.classList.toggle('noise-meter--warning', noisy);
-        message.textContent = noisy
-          ? `Peak ${sample.peakDb.toFixed(0)} dB — louder than recommended. Try a quieter room for more reliable results.`
-          : `Peak ${sample.peakDb.toFixed(0)} dB — quiet enough for testing.`;
+        const newMessage = noisy
+          ? `Peak ${peakStr} dB — louder than recommended. Try a quieter room for more reliable results.`
+          : `Peak ${peakStr} dB — quiet enough for testing.`;
+
+        if (message.textContent !== newMessage) {
+          message.textContent = newMessage;
+          status.classList.toggle('noise-meter--warning', noisy);
+          if (lastNoisy === null || noisy !== lastNoisy) {
+            lastNoisy = noisy;
+            announce(newMessage);
+          }
+        }
       });
       status.hidden = false;
       button.innerHTML = '<span aria-hidden="true">⏹</span> Stop Noise Check';
