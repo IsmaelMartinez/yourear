@@ -8,13 +8,6 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
-    # Block vite majors until vite-plugin-pwa accepts them upstream
-    # (peer-dep currently caps at vite ^7). Tracked in
-    # vite-pwa/vite-plugin-pwa#923.
-    ignore:
-      - dependency-name: "vite"
-        update-types:
-          - "version-update:semver-major"
     groups:
       # vitest and its @vitest/* plugins are co-versioned: coverage-v8 5.x
       # declares a peer on vitest 5.x, so a major bump of one without the

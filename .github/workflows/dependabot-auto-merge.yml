@@ -13,12 +13,20 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v3
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable auto-merge on non-major updates
-        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+      # Only patch/minor bumps of dev dependencies merge unattended. For a
+      # grouped PR, dependency-type is direct:production if any member is, and
+      # update-type is the highest bump, so one runtime or major entry opts the
+      # whole group out.
+      - name: Enable auto-merge on patch/minor dev-dependency updates
+        if: >-
+          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+           steps.metadata.outputs.update-type == 'version-update:semver-minor') &&
+          steps.metadata.outputs.dependency-type == 'direct:development' &&
+          steps.metadata.outputs.package-ecosystem != 'github_actions'
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
