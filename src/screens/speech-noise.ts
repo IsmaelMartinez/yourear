@@ -205,7 +205,13 @@ function renderTesting(app: HTMLElement): void {
   
   onClick('cancel-test', () => navigateTo('home'));
   
-  focusMain();
+  if (state.waitingForResponse) {
+    // Put keyboard users straight onto the word choices rather than the page top
+    document.querySelector<HTMLElement>('.speech-option')?.focus();
+    announce('What word did you hear? Choose from the options.');
+  } else {
+    focusMain();
+  }
 }
 
 function renderResults(app: HTMLElement): void {
