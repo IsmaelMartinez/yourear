@@ -85,10 +85,7 @@ export function renderTinnitus(): void {
         </div>
         
         <div class="tinnitus-play-controls">
-          <button class="btn ${settings.isPlaying ? 'btn--heard' : 'btn--primary'} btn--large" id="toggle-tone" style="min-width: 200px;">
-            <span aria-hidden="true">${settings.isPlaying ? '⏹️' : '▶️'}</span>
-            ${settings.isPlaying ? 'Stop Tone' : 'Play Tone'}
-          </button>
+          <button class="btn ${settings.isPlaying ? 'btn--heard' : 'btn--primary'} btn--large" id="toggle-tone" style="min-width: 200px;">${toggleButtonContent(settings.isPlaying)}</button>
         </div>
         
         <p class="text-muted-sm text-center" style="margin-top: var(--spacing-lg);">
@@ -142,27 +139,34 @@ export function renderTinnitus(): void {
   focusMain();
 }
 
+function toggleButtonContent(isPlaying: boolean): string {
+  return `<span aria-hidden="true">${isPlaying ? '⏹️' : '▶️'}</span> ${isPlaying ? 'Stop Tone' : 'Play Tone'}`;
+}
+
+function updateToggleButton(): void {
+  const button = document.getElementById('toggle-tone');
+  if (!button) return;
+  const { isPlaying } = getTinnitusSettings();
+  button.classList.toggle('btn--heard', isPlaying);
+  button.classList.toggle('btn--primary', !isPlaying);
+  button.innerHTML = toggleButtonContent(isPlaying);
+}
+
 function renderResultsSection(settings: TinnitusSettings): string {
   return `
     <section class="card">
       <h2 class="card__title"><span aria-hidden="true">📊</span> Your Match</h2>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); text-align: center;">
         <div>
-          <div style="font-size: 2rem; font-family: var(--font-mono); color: var(--accent-primary);">
-            ${formatFrequency(settings.frequency, 'short')}
-          </div>
+          <div id="match-frequency" style="font-size: 2rem; font-family: var(--font-mono); color: var(--accent-primary);">${formatFrequency(settings.frequency, 'short')}</div>
           <div style="color: var(--text-muted); font-size: 0.9rem;">Frequency</div>
         </div>
         <div>
-          <div style="font-size: 2rem; font-family: var(--font-mono); color: var(--accent-left);">
-            ${settings.volume} dB
-          </div>
+          <div id="match-volume" style="font-size: 2rem; font-family: var(--font-mono); color: var(--accent-left);">${settings.volume} dB</div>
           <div style="color: var(--text-muted); font-size: 0.9rem;">Loudness</div>
         </div>
       </div>
-      <p class="text-muted-sm text-center" style="margin-top: var(--spacing-md);">
-        ${describeFrequency(settings.frequency)}
-      </p>
+      <p id="match-description" class="text-muted-sm text-center" style="margin-top: var(--spacing-md);">${describeFrequency(settings.frequency)}</p>
     </section>
   `;
 }
@@ -214,21 +218,22 @@ function bindSliderEvents(): void {
 }
 
 function bindButtonEvents(): void {
-  onClick('toggle-tone', () => {
-    const settings = getTinnitusSettings();
-    if (settings.isPlaying) {
+  onClick('toggle-tone', async () => {
+    if (getTinnitusSettings().isPlaying) {
       stopTinnitusTone();
     } else {
-      startTinnitusTone();
+      try {
+        await startTinnitusTone();
+      } catch (error) {
+        console.error('Failed to start tinnitus tone:', error);
+        announce('Could not start audio. Please try again.', 'assertive');
+      }
     }
-    // Re-render to update button state
-    renderTinnitus();
+    updateToggleButton();
   });
-  
-  onClick('back-home', () => {
-    stopTinnitusTone();
-    navigateTo('home');
-  });
+
+  // Router cleanup (cleanupTinnitusScreen) stops the tone when leaving the screen
+  onClick('back-home', () => navigateTo('home'));
   
   onClick('reset-settings', () => {
     resetTinnitusSettings();
@@ -240,17 +245,13 @@ function bindButtonEvents(): void {
 
 function updateResultsDisplay(): void {
   const settings = getTinnitusSettings();
-  const resultsSection = document.querySelector('.card:nth-of-type(2)');
-  if (resultsSection) {
-    // Update just the values without full re-render
-    const freqDisplay = resultsSection.querySelector('div[style*="font-size: 2rem"]:first-of-type');
-    const volDisplay = resultsSection.querySelector('div[style*="font-size: 2rem"]:last-of-type');
-    const descDisplay = resultsSection.querySelector('.text-muted-sm');
-    
-    if (freqDisplay) freqDisplay.textContent = formatFrequency(settings.frequency, 'short');
-    if (volDisplay) volDisplay.textContent = `${settings.volume} dB`;
-    if (descDisplay) descDisplay.textContent = describeFrequency(settings.frequency);
-  }
+  const freqDisplay = document.getElementById('match-frequency');
+  const volDisplay = document.getElementById('match-volume');
+  const descDisplay = document.getElementById('match-description');
+
+  if (freqDisplay) freqDisplay.textContent = formatFrequency(settings.frequency, 'short');
+  if (volDisplay) volDisplay.textContent = `${settings.volume} dB`;
+  if (descDisplay) descDisplay.textContent = describeFrequency(settings.frequency);
 }
 
 /**
