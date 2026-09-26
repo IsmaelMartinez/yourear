@@ -9,6 +9,13 @@ import { ensureRunning } from './audio-context';
 
 let noiseNode: AudioBufferSourceNode | null = null;
 let noiseGain: GainNode | null = null;
+/** Incremented on every start/stop so a superseded startNoise() does nothing after its await */
+let noiseGeneration = 0;
+/** Pink-noise buffers keyed by sample rate; generating one costs ~15 ms on the main thread */
+const noiseBufferCache = new Map<number, AudioBuffer>();
+
+const NOISE_DURATION_S = 10;
+const NOISE_RAMP_TIME_CONSTANT_S = 0.05;
 
 /**
  * Generate pink noise buffer (more natural than white noise)
@@ -43,32 +50,58 @@ function createPinkNoiseBuffer(ctx: AudioContext, duration: number): AudioBuffer
   return buffer;
 }
 
+function getPinkNoiseBuffer(ctx: AudioContext): AudioBuffer {
+  let buffer = noiseBufferCache.get(ctx.sampleRate);
+  if (!buffer) {
+    buffer = createPinkNoiseBuffer(ctx, NOISE_DURATION_S);
+    noiseBufferCache.set(ctx.sampleRate, buffer);
+  }
+  return buffer;
+}
+
+function noiseGainForLevel(levelDb: number): number {
+  return Math.pow(10, (levelDb - 30) / 20); // Reference at -30dBFS
+}
+
 /**
- * Start playing background noise
+ * Start one looping background noise source, replacing any existing one.
+ * Change its level afterwards with setNoiseLevel().
  */
-export async function startNoise(volumeDb: number = 0): Promise<void> {
+export async function startNoise(levelDb: number = 0): Promise<void> {
   stopNoise();
+  const generation = noiseGeneration;
 
   const ctx = await ensureRunning();
-  
-  // Create 10 seconds of looping noise
-  const noiseBuffer = createPinkNoiseBuffer(ctx, 10);
-  
+  if (generation !== noiseGeneration) return; // superseded by another start or a stop
+
   noiseNode = ctx.createBufferSource();
-  noiseNode.buffer = noiseBuffer;
+  noiseNode.buffer = getPinkNoiseBuffer(ctx);
   noiseNode.loop = true;
-  
+
   noiseGain = ctx.createGain();
-  noiseGain.gain.value = Math.pow(10, (volumeDb - 30) / 20); // Reference at -30dBFS
-  
+  noiseGain.gain.value = noiseGainForLevel(levelDb);
+
   noiseNode.connect(noiseGain).connect(ctx.destination);
   noiseNode.start();
+}
+
+/**
+ * Ramp the running noise to a new level without restarting the source
+ */
+export function setNoiseLevel(levelDb: number): void {
+  if (!noiseGain) return;
+  noiseGain.gain.setTargetAtTime(
+    noiseGainForLevel(levelDb),
+    noiseGain.context.currentTime,
+    NOISE_RAMP_TIME_CONSTANT_S
+  );
 }
 
 /**
  * Stop background noise
  */
 export function stopNoise(): void {
+  noiseGeneration++;
   if (noiseNode) {
     try { noiseNode.stop(); } catch { /* already stopped */ }
     noiseNode.disconnect();
@@ -143,11 +176,62 @@ export function getRandomWord(listType: WordListType, exclude: string[] = []): s
 export const SNR_LEVELS = [10, 5, 0, -5, -10] as const;
 export type SNRLevel = typeof SNR_LEVELS[number];
 
+export type SNRResults = Map<SNRLevel, { correct: number; total: number }>;
+
+/**
+ * Noise level (dB relative to the reference) that gives the nominal SNR.
+ * Speech is played by speechSynthesis at a fixed volume outside Web Audio,
+ * so the SNR is set by moving the noise only (see ADR 008).
+ */
+export function noiseLevelDbForSNR(snr: SNRLevel): number {
+  return 0 - snr; // avoid -0 at 0 dB SNR
+}
+
+export function createEmptyResults(): SNRResults {
+  return new Map(SNR_LEVELS.map(snr => [snr, { correct: 0, total: 0 }]));
+}
+
+export interface TrialProgress {
+  currentSNR: SNRLevel;
+  currentTrial: number;
+  results: SNRResults;
+}
+
+/**
+ * Record one response and work out the next trial.
+ * Runs trialsPerSNR trials at each level in SNR_LEVELS order; done after the last level.
+ */
+export function advanceTrial(
+  progress: TrialProgress,
+  isCorrect: boolean,
+  trialsPerSNR: number
+): TrialProgress & { done: boolean } {
+  const results: SNRResults = new Map(
+    [...progress.results].map(([snr, data]) => [snr, { ...data }])
+  );
+  const current = results.get(progress.currentSNR) ?? { correct: 0, total: 0 };
+  results.set(progress.currentSNR, {
+    correct: current.correct + (isCorrect ? 1 : 0),
+    total: current.total + 1,
+  });
+
+  const nextTrial = progress.currentTrial + 1;
+  if (nextTrial < trialsPerSNR) {
+    return { currentSNR: progress.currentSNR, currentTrial: nextTrial, results, done: false };
+  }
+
+  const nextIndex = SNR_LEVELS.indexOf(progress.currentSNR) + 1;
+  if (nextIndex < SNR_LEVELS.length) {
+    return { currentSNR: SNR_LEVELS[nextIndex], currentTrial: 0, results, done: false };
+  }
+  return { currentSNR: progress.currentSNR, currentTrial: 0, results, done: true };
+}
+
 /**
  * Calculate speech threshold (SNR-50)
  * This is the SNR at which the user gets 50% correct
  */
-export function calculateSNR50(results: Map<SNRLevel, { correct: number; total: number }>): number | null {
+export function calculateSNR50(results: SNRResults): number | null {
   const points: { snr: number; percent: number }[] = [];
   
   results.forEach((data, snr) => {

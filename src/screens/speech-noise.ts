@@ -9,11 +9,16 @@ import { navigateTo } from '../state/app-state';
 import {
   startNoise,
   stopNoise,
+  setNoiseLevel,
   speakWord,
   getRandomWord,
   WORD_LISTS,
   SNR_LEVELS,
   SNRLevel,
+  SNRResults,
+  advanceTrial,
+  createEmptyResults,
+  noiseLevelDbForSNR,
   calculateSNR50,
   interpretSNR50,
   WordListType,
@@ -27,11 +32,13 @@ interface TestState {
   wordListType: WordListType;
   trialsPerSNR: number;
   currentTrial: number;
-  results: Map<SNRLevel, { correct: number; total: number }>;
+  results: SNRResults;
   waitingForResponse: boolean;
 }
 
 let state: TestState = createInitialState();
+/** Bumped on cleanup so an in-flight playNextWord stops after its next await */
+let runToken = 0;
 
 function createInitialState(): TestState {
   return {
@@ -42,7 +49,7 @@ function createInitialState(): TestState {
     wordListType: 'numbers',
     trialsPerSNR: 4,
     currentTrial: 0,
-    results: new Map(SNR_LEVELS.map(snr => [snr, { correct: 0, total: 0 }])),
+    results: createEmptyResults(),
     waitingForResponse: false,
   };
 }
@@ -123,18 +130,13 @@ function renderIntro(app: HTMLElement): void {
     state.phase = 'testing';
     state.currentSNR = SNR_LEVELS[0];
     state.currentTrial = 0;
-    state.results = new Map(SNR_LEVELS.map(snr => [snr, { correct: 0, total: 0 }]));
+    state.results = createEmptyResults();
     state.usedWords = [];
-    startNoise(getSpeechLevelForSNR(state.currentSNR));
-    renderSpeechNoise();
+    startNoise(noiseLevelDbForSNR(state.currentSNR));
     playNextWord();
   });
   
-  onClick('back-home', () => {
-    stopNoise();
-    state = createInitialState();
-    navigateTo('home');
-  });
+  onClick('back-home', () => navigateTo('home'));
   
   focusMain();
 }
@@ -201,11 +203,7 @@ function renderTesting(app: HTMLElement): void {
     });
   }
   
-  onClick('cancel-test', () => {
-    stopNoise();
-    state = createInitialState();
-    navigateTo('home');
-  });
+  onClick('cancel-test', () => navigateTo('home'));
   
   focusMain();
 }
@@ -292,6 +290,9 @@ function renderResults(app: HTMLElement): void {
           <span aria-hidden="true">⚠️</span> This is a screening tool only. 
           Results can vary based on audio quality and environment.
         </div>
+        <p style="color: var(--text-muted); margin-top: var(--spacing-md); font-size: 0.9rem;">
+          The SNR is approximate: words are spoken by your device's speech synthesiser at its own volume, not mixed with the noise.
+        </p>
       </section>
       
       <nav class="nav-buttons">
@@ -307,10 +308,7 @@ function renderResults(app: HTMLElement): void {
   
   announce(`Test complete. Your SNR-50 score is ${snr50?.toFixed(1) || 'unavailable'} decibels.`);
   
-  onClick('back-home', () => {
-    state = createInitialState();
-    navigateTo('home');
-  });
+  onClick('back-home', () => navigateTo('home'));
   
   onClick('retry-test', () => {
     state = createInitialState();
@@ -318,12 +316,6 @@ function renderResults(app: HTMLElement): void {
   });
   
   focusMain();
-}
-
-function getSpeechLevelForSNR(snr: SNRLevel): number {
-  // Base noise level at 0dB, adjust relative to speech
-  // Negative SNR = speech quieter than noise
-  return -snr;
 }
 
 function calculateProgress(): number {
@@ -338,6 +330,7 @@ function calculateProgress(): number {
 }
 
 async function playNextWord(): Promise<void> {
+  const token = runToken;
   state.waitingForResponse = false;
   renderSpeechNoise();
   
@@ -350,20 +343,21 @@ async function playNextWord(): Promise<void> {
     state.usedWords.shift();
   }
   
-  // Update noise level for current SNR
-  startNoise(getSpeechLevelForSNR(state.currentSNR));
-  
   // Wait a moment, then speak
   await new Promise(resolve => setTimeout(resolve, 500));
+  if (token !== runToken) return;
   
   try {
     await speakWord(state.currentWord);
   } catch (e) {
+    if (token !== runToken) return; // cancelled speech rejects; not an error
     console.error('Speech synthesis failed:', e);
   }
+  if (token !== runToken) return;
   
   // Wait a moment after speech, then show options
   await new Promise(resolve => setTimeout(resolve, 300));
+  if (token !== runToken) return;
   
   state.waitingForResponse = true;
   renderSpeechNoise();
@@ -371,38 +365,32 @@ async function playNextWord(): Promise<void> {
 
 function handleResponse(selectedWord: string): void {
   const isCorrect = selectedWord.toLowerCase() === state.currentWord.toLowerCase();
-  
-  // Record result
-  const snrResults = state.results.get(state.currentSNR)!;
-  snrResults.total++;
-  if (isCorrect) snrResults.correct++;
-  
-  state.currentTrial++;
-  
-  // Check if we need to move to next SNR level
-  if (state.currentTrial >= state.trialsPerSNR) {
-    state.currentTrial = 0;
-    
-    // Move to next SNR level
-    const currentIndex = SNR_LEVELS.indexOf(state.currentSNR);
-    if (currentIndex < SNR_LEVELS.length - 1) {
-      state.currentSNR = SNR_LEVELS[currentIndex + 1];
-      playNextWord();
-    } else {
-      // Test complete
-      stopNoise();
-      state.phase = 'results';
-      renderSpeechNoise();
-    }
-  } else {
-    playNextWord();
+  const previousSNR = state.currentSNR;
+  const next = advanceTrial(state, isCorrect, state.trialsPerSNR);
+  state.results = next.results;
+  state.currentSNR = next.currentSNR;
+  state.currentTrial = next.currentTrial;
+
+  if (next.done) {
+    stopNoise();
+    state.phase = 'results';
+    renderSpeechNoise();
+    return;
   }
+  if (state.currentSNR !== previousSNR) {
+    setNoiseLevel(noiseLevelDbForSNR(state.currentSNR));
+  }
+  playNextWord();
 }
 
 /**
  * Cleanup when leaving the screen
  */
 export function cleanupSpeechNoiseScreen(): void {
+  runToken++;
+  if ('speechSynthesis' in window) {
+    speechSynthesis.cancel();
+  }
   stopNoise();
   state = createInitialState();
 }

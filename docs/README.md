@@ -34,6 +34,7 @@ ADRs document significant technical decisions made during development.
 | [005](adr/005-no-wasm.md) | No WebAssembly for Initial Implementation | Accepted |
 | [006](adr/006-age-based-comparison.md) | Age-Based Expected Thresholds | Accepted |
 | [007](adr/007-accessibility.md) | Accessibility Implementation | Accepted |
+| [008](adr/008-speech-in-noise-levels.md) | Nominal SNR in the Speech-in-Noise Test | Accepted |
 
 ---
 
