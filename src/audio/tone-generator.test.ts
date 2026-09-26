@@ -372,6 +372,25 @@ describe('tone-generator', () => {
       expect(created[1].oscillator.disconnect).toHaveBeenCalled();
     });
 
+    it('stopTone while the audio context is resuming prevents the pending tone from starting', async () => {
+      let finishResume!: () => void;
+      const resume = vi.fn(() => new Promise<void>(resolve => { finishResume = resolve; }));
+      const Running = globalThis.AudioContext;
+      globalThis.AudioContext = class extends (Running as unknown as new () => object) {
+        state = 'suspended' as AudioContextState;
+        resume = resume;
+      } as unknown as typeof AudioContext;
+      const { playTone, stopTone } = await import('./tone-generator');
+
+      const promise = playTone({ frequency: 1000, level: 40, duration: 2000, channel: 'right' });
+      await vi.waitFor(() => expect(resume).toHaveBeenCalled());
+      stopTone();
+      finishResume();
+      await promise;
+
+      expect(created).toHaveLength(0);
+    });
+
     it('stopTone ramps the gain to 0 before stopping the oscillator', async () => {
       const { playTone, stopTone } = await import('./tone-generator');
 

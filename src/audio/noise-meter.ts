@@ -72,18 +72,19 @@ export async function startNoiseMeter(
     );
   }
 
-  let ctx: AudioContext;
+  let analyser: AnalyserNode;
+  let source: MediaStreamAudioSourceNode;
   try {
-    ctx = await ensureRunning();
+    const ctx = await ensureRunning();
+    source = ctx.createMediaStreamSource(stream);
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = FFT_SIZE;
+    source.connect(analyser);
   } catch (error) {
     // Release the microphone we just acquired
     stream.getTracks().forEach((track) => track.stop());
     throw error;
   }
-  const source = ctx.createMediaStreamSource(stream);
-  const analyser = ctx.createAnalyser();
-  analyser.fftSize = FFT_SIZE;
-  source.connect(analyser);
 
   const buffer = new Float32Array(analyser.fftSize);
   let peakDb = 0;

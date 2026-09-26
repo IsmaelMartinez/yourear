@@ -13,6 +13,8 @@ export { AudioInitError } from './audio-context';
 // Active tone tracking
 let activeOscillator: OscillatorNode | null = null;
 let activeGain: GainNode | null = null;
+// Bumped by stopTone so a playTone still awaiting the AudioContext does not start
+let toneGeneration = 0;
 
 export interface ToneOptions {
   frequency: number;
@@ -64,6 +66,7 @@ function hearingLevelToGain(dbHL: number): number {
 }
 
 export function stopTone(): void {
+  toneGeneration++;
   if (!activeOscillator || !activeGain) return;
 
   const now = getAudioContext().currentTime;
@@ -81,10 +84,13 @@ export function stopTone(): void {
 export async function playTone(options: ToneOptions): Promise<void> {
   const { frequency, level, duration, channel } = options;
   
+  stopTone();
+  const generation = toneGeneration;
+
   const ctx = await ensureRunning();
 
-  // Stop after the await so a tone started while we were waiting is also faded out
-  stopTone();
+  // Stopped or superseded by another tone while the context was resuming
+  if (generation !== toneGeneration) return;
   
   const oscillator = ctx.createOscillator();
   oscillator.type = 'sine';
