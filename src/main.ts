@@ -6,7 +6,6 @@
 
 import './styles.css';
 import { getState, setRenderCallback } from './state/app-state';
-import { setTestRenderCallback } from './services/test-runner';
 import { renderHome } from './screens/home';
 import { renderCalibration, cleanupCalibrationScreen } from './screens/calibration';
 import { renderTest, cleanupTestScreen } from './screens/test';
@@ -107,9 +106,8 @@ function seedDemoProfile(): void {
 // Initialize Application
 // ============================================
 
-// Set up render callbacks
+// Set up render callback
 setRenderCallback(render);
-setTestRenderCallback(render);
 
 // Check for URL parameters (demo mode)
 checkUrlParams();

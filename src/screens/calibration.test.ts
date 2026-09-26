@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { renderCalibration, cleanupCalibrationScreen } from './calibration';
 import { startNoiseMeter } from '../audio/noise-meter';
 import { getState, resetState, setRenderCallback } from '../state/app-state';
@@ -24,8 +24,8 @@ function changeAge(value: string): void {
 }
 
 describe('calibration screen', () => {
-  let renderSpy: ReturnType<typeof vi.fn>;
-  let meterStop: ReturnType<typeof vi.fn>;
+  let renderSpy: Mock<() => void>;
+  let meterStop: Mock<() => void>;
 
   beforeEach(() => {
     vi.clearAllMocks();

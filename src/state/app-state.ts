@@ -66,6 +66,13 @@ export function setState(updates: Partial<AppState>): void {
 }
 
 /**
+ * Re-render the current screen without changing state
+ */
+export function rerender(): void {
+  renderCallback?.();
+}
+
+/**
  * Navigate to a different screen
  */
 export function navigateTo(screen: Screen, options?: { 
@@ -85,13 +92,6 @@ export function navigateTo(screen: Screen, options?: {
  */
 export function setUserAge(age: number | undefined): void {
   state = { ...state, userAge: age };
-}
-
-/**
- * Set the active hearing test instance
- */
-export function setHearingTest(test: HearingTest | null): void {
-  setState({ hearingTest: test });
 }
 
 /**
