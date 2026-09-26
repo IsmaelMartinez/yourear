@@ -22,11 +22,16 @@ const profile: HearingProfile = {
 describe('results screen accessibility', () => {
   beforeEach(() => {
     vi.resetModules();
+    // renderResults() schedules focusMain() and announce() timers; keep them from
+    // firing after the jsdom environment is torn down.
+    vi.useFakeTimers();
     stubCanvas();
     document.body.innerHTML = '<div id="app"></div>';
   });
 
   afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
