@@ -18,10 +18,10 @@ export default defineConfig({
       exclude: ['src/main.ts', 'src/screens/**', 'src/test/**', '**/*.d.ts', '**/*.test.ts'],
       // A ratchet at the measured baseline, rounded down: raise it as coverage grows, never lower it
       thresholds: {
-        statements: 76,
-        branches: 80,
-        functions: 76,
-        lines: 76,
+        statements: 98,
+        branches: 91,
+        functions: 96,
+        lines: 98,
       },
     },
   },
