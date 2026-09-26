@@ -40,6 +40,8 @@ return {
 | 4000 Hz | ~16 dB | ~40 dB |
 | 8000 Hz | ~23 dB | ~55 dB |
 
+The shaded band's better edge (p10) is derived from those same median and p90 values as `median − round((p90 − median) / 2)`, floored at −5 dB HL, reflecting ISO 7029's narrower spread below the median than above it (for the 43-year-old: −5, −2, 4 and 7 dB at 250, 1000, 4000 and 8000 Hz).
+
 ## Consequences
 ### Positive
 - Users understand their results in context
