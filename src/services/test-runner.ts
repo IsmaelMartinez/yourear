@@ -6,7 +6,7 @@ import { getState, setState, navigateTo, rerender } from '../state/app-state';
 import { createProfile } from '../storage/profile';
 import { HearingTest, TestEventType } from '../audio/hearing-test';
 import { AudioInitError } from '../audio/audio-context';
-import { QUICK_TEST_CONFIG, DETAILED_TEST_CONFIG } from '../types';
+import { TEST_MODES } from '../types';
 import { announce } from '../utils/dom';
 
 /**
@@ -14,12 +14,7 @@ import { announce } from '../utils/dom';
  */
 export function startTest(): void {
   const { testMode, userAge } = getState();
-  const config = testMode === 'quick' 
-    ? QUICK_TEST_CONFIG 
-    : testMode === 'detailed' 
-      ? DETAILED_TEST_CONFIG 
-      : undefined;
-  const hearingTest = new HearingTest(config);
+  const hearingTest = new HearingTest(TEST_MODES[testMode].config);
   
   // Setup event handlers, ignoring a test that has since been stopped
   hearingTest.on((event: TestEventType) => {
@@ -56,17 +51,9 @@ export function stopTest(): void {
  */
 function handleTestComplete(hearingTest: HearingTest, userAge?: number): void {
   const results = hearingTest.getResults();
-  const { testMode } = getState();
-  const testLabels: Record<string, string> = {
-    quick: 'Quick Test',
-    full: 'Full Test',
-    detailed: 'Detailed Test',
-  };
-  const testLabel = testLabels[testMode] || 'Hearing Test';
-  
-  const profile = createProfile({ 
-    ...results, 
-    name: `${testLabel} - ${new Date().toLocaleDateString()}`,
+  const profile = createProfile({
+    ...results,
+    name: `${TEST_MODES[getState().testMode].label} - ${new Date().toLocaleDateString()}`,
     age: userAge,
   });
   

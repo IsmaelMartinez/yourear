@@ -4,11 +4,8 @@
 
 import { getAppContainer, onClick, announce } from '../utils/dom';
 import { getState, navigateTo } from '../state/app-state';
-import { TestState, formatFrequency } from '../types';
+import { TestState, TEST_MODES, formatFrequency } from '../types';
 import { stopTest } from '../services/test-runner';
-
-const MODE_ICONS = { quick: '⚡', full: '🎵', detailed: '🔬' } as const;
-const MODE_LABELS = { quick: 'Quick', full: 'Full', detailed: 'Detailed' } as const;
 
 // Keys a focused control handles natively (activation), which the shortcuts must not steal
 const CONTROL_SELECTOR = 'button, input, select, textarea, a[href], [role="button"]';
@@ -51,12 +48,12 @@ export function renderTest(): void {
 }
 
 function renderShell(app: HTMLElement): void {
-  const { testMode } = getState();
+  const { icon, label } = TEST_MODES[getState().testMode];
 
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Hearing Test in Progress" data-screen="test">
-      <header class="header" role="banner" style="margin-bottom: var(--spacing-lg);">
-        <h1 class="header__title" style="font-size: 1.5rem;"><span aria-hidden="true">${MODE_ICONS[testMode]}</span> ${MODE_LABELS[testMode]} Test</h1>
+      <header class="header header--compact" role="banner">
+        <h1 class="header__title"><span aria-hidden="true">${icon}</span> ${label}</h1>
       </header>
 
       <section class="card card--glow" aria-labelledby="test-status-title">
@@ -101,7 +98,7 @@ function renderShell(app: HTMLElement): void {
           </div>
         </div>
 
-        <button class="btn btn--secondary" id="stop-test" style="margin-top: var(--spacing-xl); width: 100%;" aria-label="Stop the hearing test and return to home">Stop Test</button>
+        <button class="btn btn--secondary mt-xl w-full" id="stop-test" aria-label="Stop the hearing test and return to home">Stop Test</button>
       </section>
 
       <section class="card" aria-labelledby="tips-title">
@@ -173,10 +170,8 @@ function updateTestDisplay(state: TestState): void {
   setText('test-progress-text', `${progress}% complete`);
 
   // Format: "4" + "kHz" or "250" + "Hz" for display, "4 kilohertz" for screen readers
-  const freqLabel = state.currentFrequency >= 1000
-    ? String(state.currentFrequency / 1000)
-    : String(state.currentFrequency);
-  const freqUnit = state.currentFrequency >= 1000 ? 'kHz' : 'Hz';
+  const hz = state.currentFrequency;
+  const [freqLabel, freqUnit] = hz >= 1000 ? [hz / 1000, 'kHz'] : [hz, 'Hz'];
   const freqSpoken = formatFrequency(state.currentFrequency, 'spoken');
   const earLabel = state.currentEar === 'right' ? 'Right' : 'Left';
 

@@ -5,7 +5,7 @@
  * at specific frequencies for hearing threshold testing.
  */
 
-import { ensureRunning, getAudioContext } from './audio-context';
+import { dbToGain, ensureRunning, getAudioContext } from './audio-context';
 
 // Active tone tracking
 let activeOscillator: OscillatorNode | null = null;
@@ -18,15 +18,6 @@ export interface ToneOptions {
   level: number;
   duration: number;
   channel: 'left' | 'right' | 'both';
-}
-
-/**
- * Convert decibels to linear gain value
- * @param db - Decibel value
- * @returns Linear gain multiplier (0-1 range for negative dB)
- */
-function dbToGain(db: number): number {
-  return Math.pow(10, db / 20);
 }
 
 /**

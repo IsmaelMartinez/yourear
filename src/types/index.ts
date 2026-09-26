@@ -70,6 +70,15 @@ export const DETAILED_TEST_CONFIG: TestConfig = {
   frequencies: EXTENDED_FREQUENCIES,
 };
 
+export type TestMode = 'full' | 'quick' | 'detailed';
+
+/** Each test mode's display metadata and config; `minutes` is the approximate duration */
+export const TEST_MODES: Record<TestMode, { icon: string; label: string; config: TestConfig; minutes: number; note?: string }> = {
+  full: { icon: '🎵', label: 'Full Test', config: DEFAULT_TEST_CONFIG, minutes: 8 },
+  quick: { icon: '⚡', label: 'Quick Test', config: QUICK_TEST_CONFIG, minutes: 2 },
+  detailed: { icon: '🔬', label: 'Detailed Test', config: DETAILED_TEST_CONFIG, minutes: 15, note: 'incl. inter-octave' },
+};
+
 /**
  * Format a frequency value for display
  * @param hz - Frequency in Hertz

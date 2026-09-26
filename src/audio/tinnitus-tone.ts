@@ -2,7 +2,7 @@
  * Tinnitus tone generator - continuous adjustable tone for frequency matching
  */
 
-import { ensureRunning } from './audio-context';
+import { dbToGain, ensureRunning } from './audio-context';
 
 /** Time constant (s) for gain ramps; avoids clicks on start, stop and volume changes */
 const RAMP_TIME_CONSTANT = 0.015;
@@ -30,12 +30,11 @@ const DEFAULTS = { frequency: 4000, volume: 30 } as const;
 let currentSettings: Omit<TinnitusSettings, 'isPlaying'> = { ...DEFAULTS };
 
 /**
- * Convert dB to linear gain
+ * Convert the matcher's loudness setting to gain: 0 maps to -50 dBFS for comfortable
+ * listening, and each step is scaled by 0.8 to keep the range reasonable
  */
-function dbToGain(db: number): number {
-  // Reference: 0 dB = -50 dBFS for comfortable listening
-  const dbFS = -50 + db * 0.8; // Scale to reasonable range
-  return Math.pow(10, dbFS / 20);
+function volumeToGain(volume: number): number {
+  return dbToGain(-50 + volume * 0.8);
 }
 
 /**
@@ -56,7 +55,7 @@ export async function startTinnitusTone(): Promise<void> {
 
   gainNode = audioCtx.createGain();
   gainNode.gain.value = 0;
-  gainNode.gain.setTargetAtTime(dbToGain(currentSettings.volume), audioCtx.currentTime, RAMP_TIME_CONSTANT);
+  gainNode.gain.setTargetAtTime(volumeToGain(currentSettings.volume), audioCtx.currentTime, RAMP_TIME_CONSTANT);
 
   oscillator.connect(gainNode).connect(audioCtx.destination);
   oscillator.start();
@@ -102,7 +101,7 @@ export function setTinnitusFrequency(hz: number): void {
 export function setTinnitusVolume(db: number): void {
   currentSettings.volume = Math.max(0, Math.min(60, db));
   if (gainNode && ctx) {
-    gainNode.gain.setTargetAtTime(dbToGain(currentSettings.volume), ctx.currentTime, RAMP_TIME_CONSTANT);
+    gainNode.gain.setTargetAtTime(volumeToGain(currentSettings.volume), ctx.currentTime, RAMP_TIME_CONSTANT);
   }
 }
 

@@ -5,7 +5,7 @@ import { AudioInitError } from '../audio/audio-context';
 import { announce } from '../utils/dom';
 import { getState, navigateTo, resetState, setRenderCallback, setUserAge } from '../state/app-state';
 import { createProfile } from '../storage/profile';
-import { DETAILED_TEST_CONFIG, QUICK_TEST_CONFIG } from '../types';
+import { DEFAULT_TEST_CONFIG, DETAILED_TEST_CONFIG, QUICK_TEST_CONFIG } from '../types';
 
 vi.mock('../audio/hearing-test', () => ({
   HearingTest: vi.fn(),
@@ -92,7 +92,7 @@ describe('test-runner', () => {
   });
 
   it.each([
-    ['full', undefined],
+    ['full', DEFAULT_TEST_CONFIG],
     ['quick', QUICK_TEST_CONFIG],
     ['detailed', DETAILED_TEST_CONFIG],
   ] as const)('builds a %s test from its config', (mode, config) => {

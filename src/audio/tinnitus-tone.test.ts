@@ -41,7 +41,8 @@ const fakeCtx = {
   }),
 };
 
-vi.mock('./audio-context', () => ({
+vi.mock('./audio-context', async importOriginal => ({
+  ...await importOriginal<object>(),
   ensureRunning: vi.fn(async () => fakeCtx),
 }));
 

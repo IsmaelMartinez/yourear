@@ -2,7 +2,7 @@
  * Results screen - Display audiogram and summary
  */
 
-import { getAppContainer, onClick, announce, focusMain, escapeHtml } from '../utils/dom';
+import { getAppContainer, onClick, announce, focusMain, escapeHtml, renderHeader, renderFooter } from '../utils/dom';
 import { getLatestProfile } from '../storage/profile';
 import { Audiogram, generateSummary } from '../ui/audiogram';
 import { getState, navigateTo } from '../state/app-state';
@@ -24,11 +24,7 @@ export function renderResults(): void {
   
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Hearing Test Results">
-      <header class="header" role="banner">
-        <div class="header__logo" aria-hidden="true">📊</div>
-        <h1 class="header__title">Your Results</h1>
-        <p class="header__subtitle">${escapeHtml(displayProfile.name || 'Hearing Assessment')}${displayProfile.age ? ` · Age ${displayProfile.age}` : ''}</p>
-      </header>
+      ${renderHeader('📊', 'Your Results', `${escapeHtml(displayProfile.name || 'Hearing Assessment')}${displayProfile.age ? ` · Age ${displayProfile.age}` : ''}`)}
       
       <section class="card card--glow" aria-labelledby="audiogram-title">
         <h2 class="card__title" id="audiogram-title"><span aria-hidden="true">🎼</span> Your Audiogram</h2>
@@ -58,9 +54,7 @@ export function renderResults(): void {
         </button>
       </nav>
       
-      <footer class="footer" role="contentinfo">
-        <p>Open source project · <a href="https://github.com/IsmaelMartinez/yourear" target="_blank" rel="noopener noreferrer">GitHub <span class="sr-only">(opens in new tab)</span></a></p>
-      </footer>
+      ${renderFooter()}
     </main>
   `;
   
@@ -84,8 +78,8 @@ export function renderResults(): void {
 function renderAgeLegend(age: number): string {
   return `
     <p class="text-muted-sm text-center" aria-hidden="true">
-      <span style="color: var(--accent-warning);">- - -</span> Yellow dashed line = expected median for age ${age}<br>
-      <span style="background: rgba(251, 191, 36, 0.3); padding: 2px 8px; border-radius: 4px;">Shaded area</span> = typical range for your age
+      <span class="text-warning">- - -</span> Yellow dashed line = expected median for age ${age}<br>
+      <span class="legend-swatch">Shaded area</span> = typical range for your age
     </p>
   `;
 }

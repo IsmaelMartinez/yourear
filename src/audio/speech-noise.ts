@@ -5,7 +5,7 @@
  * Tests ability to understand speech at various signal-to-noise ratios (SNR).
  */
 
-import { ensureRunning } from './audio-context';
+import { dbToGain, ensureRunning } from './audio-context';
 
 let noiseNode: AudioBufferSourceNode | null = null;
 let noiseGain: GainNode | null = null;
@@ -60,7 +60,7 @@ function getPinkNoiseBuffer(ctx: AudioContext): AudioBuffer {
 }
 
 function noiseGainForLevel(levelDb: number): number {
-  return Math.pow(10, (levelDb - 30) / 20); // Reference at -30dBFS
+  return dbToGain(levelDb - 30); // Reference at -30dBFS
 }
 
 /**

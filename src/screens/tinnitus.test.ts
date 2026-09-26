@@ -4,7 +4,8 @@ function fakeParam() {
   return { value: 0, setTargetAtTime: vi.fn(), cancelScheduledValues: vi.fn(), setValueAtTime: vi.fn() };
 }
 
-vi.mock('../audio/audio-context', () => ({
+vi.mock('../audio/audio-context', async importOriginal => ({
+  ...await importOriginal<object>(),
   ensureRunning: vi.fn(async () => ({
     currentTime: 0,
     destination: {},

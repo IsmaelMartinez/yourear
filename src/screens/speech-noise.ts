@@ -4,7 +4,7 @@
  * Tests ability to understand speech with background noise at various SNR levels.
  */
 
-import { getAppContainer, onClick, announce, focusMain } from '../utils/dom';
+import { getAppContainer, onClick, announce, focusMain, renderHeader } from '../utils/dom';
 import { navigateTo } from '../state/app-state';
 import {
   startNoise,
@@ -73,17 +73,13 @@ export function renderSpeechNoise(): void {
 function renderIntro(app: HTMLElement): void {
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Speech in Noise Test">
-      <header class="header" role="banner">
-        <div class="header__logo" aria-hidden="true">🗣️</div>
-        <h1 class="header__title">Speech in Noise</h1>
-        <p class="header__subtitle">Test your ability to understand speech with background noise</p>
-      </header>
+      ${renderHeader('🗣️', 'Speech in Noise', 'Test your ability to understand speech with background noise')}
       
       <section class="card card--glow">
         <h2 class="card__title"><span aria-hidden="true">📋</span> How It Works</h2>
         <div class="text-secondary-lg">
           <p>This test measures how well you understand speech when there's background noise - like a restaurant or busy street.</p>
-          <ol style="margin: var(--spacing-lg) 0; padding-left: var(--spacing-xl); line-height: 2;">
+          <ol class="bullet-list bullet-list--spaced">
             <li>You'll hear a word spoken with background noise</li>
             <li>Type or select what you heard</li>
             <li>The noise level will change to find your threshold</li>
@@ -100,8 +96,8 @@ function renderIntro(app: HTMLElement): void {
           </ul>
         </div>
         
-        <div style="margin-top: var(--spacing-xl);">
-          <label style="display: block; margin-bottom: var(--spacing-sm); font-weight: 500;">Word List:</label>
+        <div class="mt-xl">
+          <label class="field-label">Word List:</label>
           <select id="word-list" class="speech-select">
             <option value="numbers" selected>Numbers (one, two, three...)</option>
             <option value="colors">Colors (red, blue, green...)</option>
@@ -109,7 +105,7 @@ function renderIntro(app: HTMLElement): void {
           </select>
         </div>
         
-        <button class="btn btn--primary btn--large mt-md" id="start-test" style="width: 100%;">
+        <button class="btn btn--primary btn--large mt-md w-full" id="start-test">
           <span aria-hidden="true">▶️</span> Start Test
         </button>
       </section>
@@ -147,11 +143,7 @@ function renderTesting(app: HTMLElement): void {
   
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Speech in Noise Test - Testing">
-      <header class="header" role="banner">
-        <div class="header__logo" aria-hidden="true">🗣️</div>
-        <h1 class="header__title">Listen Carefully</h1>
-        <p class="header__subtitle">SNR: ${state.currentSNR > 0 ? '+' : ''}${state.currentSNR} dB</p>
-      </header>
+      ${renderHeader('🗣️', 'Listen Carefully', `SNR: ${state.currentSNR > 0 ? '+' : ''}${state.currentSNR} dB`)}
       
       <section class="card card--glow">
         <div class="progress" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
@@ -169,7 +161,7 @@ function renderTesting(app: HTMLElement): void {
                 </button>
               `).join('')}
             </div>
-            <button class="btn btn--secondary mt-md" id="replay-word" style="width: 100%;">
+            <button class="btn btn--secondary mt-md w-full" id="replay-word">
               <span aria-hidden="true">🔁</span> Replay Word
             </button>
           ` : `
@@ -220,40 +212,36 @@ function renderResults(app: HTMLElement): void {
   
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Speech in Noise Results">
-      <header class="header" role="banner">
-        <div class="header__logo" aria-hidden="true">📊</div>
-        <h1 class="header__title">Your Results</h1>
-        <p class="header__subtitle">Speech-in-Noise Test Complete</p>
-      </header>
+      ${renderHeader('📊', 'Your Results', 'Speech-in-Noise Test Complete')}
       
       <section class="card card--glow">
         <h2 class="card__title"><span aria-hidden="true">🎯</span> SNR-50 Score</h2>
         ${snr50 !== null ? `
-          <div style="text-align: center; margin: var(--spacing-xl) 0;">
-            <div style="font-size: 3rem; font-family: var(--font-mono); color: var(--accent-primary);">
+          <div class="snr-score">
+            <div class="snr-score__value">
               ${snr50 > 0 ? '+' : ''}${snr50.toFixed(1)} dB
             </div>
-            <div style="font-size: 1.2rem; color: var(--accent-left); margin-top: var(--spacing-sm);">
+            <div class="snr-score__grade">
               ${interpretation?.grade}
             </div>
-            <p style="color: var(--text-secondary); margin-top: var(--spacing-md);">
+            <p class="text-secondary mt-md">
               ${interpretation?.description}
             </p>
           </div>
         ` : `
-          <p style="text-align: center; color: var(--text-muted);">
+          <p class="text-center text-muted">
             Unable to calculate SNR-50 - not enough data points.
           </p>
         `}
         
-        <div style="margin-top: var(--spacing-xl);">
-          <h3 style="font-size: 1rem; margin-bottom: var(--spacing-md);">Detailed Results</h3>
-          <table style="width: 100%; border-collapse: collapse;">
+        <div class="mt-xl">
+          <h3 class="subheading">Detailed Results</h3>
+          <table class="snr-table">
             <thead>
-              <tr style="border-bottom: 1px solid var(--border-color);">
-                <th style="padding: var(--spacing-sm); text-align: left;">SNR Level</th>
-                <th style="padding: var(--spacing-sm); text-align: center;">Correct</th>
-                <th style="padding: var(--spacing-sm); text-align: right;">Accuracy</th>
+              <tr>
+                <th>SNR Level</th>
+                <th>Correct</th>
+                <th>Accuracy</th>
               </tr>
             </thead>
             <tbody>
@@ -261,10 +249,10 @@ function renderResults(app: HTMLElement): void {
                 const data = state.results.get(snr) || { correct: 0, total: 0 };
                 const percent = data.total > 0 ? (data.correct / data.total) * 100 : 0;
                 return `
-                  <tr style="border-bottom: 1px solid var(--border-color);">
-                    <td style="padding: var(--spacing-sm); font-family: var(--font-mono);">${snr > 0 ? '+' : ''}${snr} dB</td>
-                    <td style="padding: var(--spacing-sm); text-align: center;">${data.correct}/${data.total}</td>
-                    <td style="padding: var(--spacing-sm); text-align: right; color: ${percent >= 50 ? 'var(--accent-success)' : 'var(--text-muted)'};">
+                  <tr>
+                    <td>${snr > 0 ? '+' : ''}${snr} dB</td>
+                    <td>${data.correct}/${data.total}</td>
+                    <td class="${percent >= 50 ? 'text-success' : 'text-muted'}">
                       ${percent.toFixed(0)}%
                     </td>
                   </tr>
@@ -279,24 +267,24 @@ function renderResults(app: HTMLElement): void {
         <h2 class="card__title"><span aria-hidden="true">ℹ️</span> Understanding Your Score</h2>
         <div class="text-secondary-lg">
           <p><strong>SNR-50</strong> is the Signal-to-Noise Ratio where you correctly identify 50% of words.</p>
-          <ul style="margin: var(--spacing-md) 0; padding-left: var(--spacing-xl);">
+          <ul class="bullet-list">
             <li><strong>Lower is better</strong> - you can understand speech with more background noise</li>
             <li><strong>0 dB SNR</strong> means speech and noise are equally loud</li>
             <li><strong>Negative values</strong> mean you can understand even when noise is louder</li>
           </ul>
-          <table style="width: 100%; margin-top: var(--spacing-md);">
-            <tr><td style="padding: 4px;">≤ -5 dB</td><td style="color: var(--accent-success);">Excellent</td></tr>
-            <tr><td style="padding: 4px;">-5 to 0 dB</td><td style="color: var(--accent-left);">Good</td></tr>
-            <tr><td style="padding: 4px;">0 to 5 dB</td><td style="color: var(--text-secondary);">Average</td></tr>
-            <tr><td style="padding: 4px;">5 to 10 dB</td><td style="color: var(--accent-warning);">Below Average</td></tr>
-            <tr><td style="padding: 4px;">> 10 dB</td><td style="color: var(--accent-right);">Difficulty</td></tr>
+          <table class="snr-scale">
+            <tr><td>≤ -5 dB</td><td class="text-success">Excellent</td></tr>
+            <tr><td>-5 to 0 dB</td><td class="text-left-ear">Good</td></tr>
+            <tr><td>0 to 5 dB</td><td class="text-secondary">Average</td></tr>
+            <tr><td>5 to 10 dB</td><td class="text-warning">Below Average</td></tr>
+            <tr><td>> 10 dB</td><td class="text-right-ear">Difficulty</td></tr>
           </table>
         </div>
         <div class="disclaimer" role="alert">
           <span aria-hidden="true">⚠️</span> This is a screening tool only. 
           Results can vary based on audio quality and environment.
         </div>
-        <p style="color: var(--text-muted); margin-top: var(--spacing-md); font-size: 0.9rem;">
+        <p class="text-muted-sm">
           The SNR is approximate: words are spoken by your device's speech synthesiser at its own volume, not mixed with the noise.
         </p>
       </section>

@@ -2,7 +2,7 @@
  * Calibration screen - Age input and headphone testing before the test
  */
 
-import { getAppContainer, onClick, onChange, announce, focusMain } from '../utils/dom';
+import { getAppContainer, onClick, onChange, announce, focusMain, renderHeader } from '../utils/dom';
 import { playCalibrationTone, stopTone } from '../audio/tone-generator';
 import {
   startNoiseMeter,
@@ -11,12 +11,7 @@ import {
 } from '../audio/noise-meter';
 import { getState, navigateTo, setUserAge } from '../state/app-state';
 import { startTest } from '../services/test-runner';
-
-const MODE_CONFIG = {
-  quick:    { icon: '⚡', label: 'Quick Test',    subtitle: '3 frequencies · ~2 minutes' },
-  full:     { icon: '🔊', label: 'Full Test',     subtitle: '6 frequencies · ~8 minutes' },
-  detailed: { icon: '🔬', label: 'Detailed Test', subtitle: '11 frequencies · ~15 minutes' },
-} as const;
+import { TEST_MODES } from '../types';
 
 // Module-level so the router can stop the meter when leaving the screen
 let noiseMeter: NoiseMeterHandle | null = null;
@@ -41,15 +36,11 @@ export function renderCalibration(): void {
 
   const app = getAppContainer();
   const { testMode, userAge } = getState();
-  const modeConfig = MODE_CONFIG[testMode];
+  const { icon, label, config, minutes } = TEST_MODES[testMode];
 
   app.innerHTML = `
-    <main id="main-content" class="screen" tabindex="-1" aria-label="${modeConfig.label} Setup">
-      <header class="header" role="banner">
-        <div class="header__logo" aria-hidden="true">${modeConfig.icon}</div>
-        <h1 class="header__title">${modeConfig.label} Setup</h1>
-        <p class="header__subtitle">${modeConfig.subtitle}</p>
-      </header>
+    <main id="main-content" class="screen" tabindex="-1" aria-label="${label} Setup">
+      ${renderHeader(icon, `${label} Setup`, `${config.frequencies.length} frequencies · ~${minutes} minutes`)}
       
       <section class="card card--glow" aria-labelledby="age-section-title">
         <div class="calibration">
@@ -122,7 +113,7 @@ export function renderCalibration(): void {
     </main>
   `;
   
-  announce(`${modeConfig.label} setup. Enter your age and test your headphones before starting.`);
+  announce(`${label} setup. Enter your age and test your headphones before starting.`);
 
   // Track age changes
   onChange('age-input', (value) => {

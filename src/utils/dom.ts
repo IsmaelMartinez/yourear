@@ -69,3 +69,24 @@ export function getAppContainer(): HTMLElement {
   return app;
 }
 
+/**
+ * Screen header markup; `subtitle` is inserted as HTML, so escape any user data in it
+ */
+export function renderHeader(icon: string, title: string, subtitle: string): string {
+  return `
+    <header class="header" role="banner">
+      <div class="header__logo" aria-hidden="true">${icon}</div>
+      <h1 class="header__title">${title}</h1>
+      <p class="header__subtitle">${subtitle}</p>
+    </header>
+  `;
+}
+
+export function renderFooter(): string {
+  return `
+    <footer class="footer" role="contentinfo">
+      <p>Open source project · <a href="https://github.com/IsmaelMartinez/yourear" target="_blank" rel="noopener noreferrer">GitHub <span class="sr-only">(opens in new tab)</span></a></p>
+    </footer>
+  `;
+}
+
