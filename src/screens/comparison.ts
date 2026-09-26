@@ -4,7 +4,8 @@
 
 import { getAppContainer, onClick, announce, focusMain, escapeHtml } from '../utils/dom';
 import { getAllProfiles } from '../storage/profile';
-import { ComparisonAudiogram, calculatePTAChange } from '../ui/comparison-audiogram';
+import { ComparisonAudiogram, calculatePTAChange, PROFILE_LINE_STYLES } from '../ui/comparison-audiogram';
+import { renderThresholdTable } from '../ui/threshold-table';
 import { navigateTo } from '../state/app-state';
 import { HearingProfile } from '../types';
 
@@ -12,7 +13,7 @@ import { HearingProfile } from '../types';
 let selectedProfileIds: Set<string> = new Set();
 let comparisonAudiogram: ComparisonAudiogram | null = null;
 
-export function renderComparison(): void {
+export function renderComparison(focusProfileId?: string): void {
   const app = getAppContainer();
   const profiles = getAllProfiles().sort((a, b) => 
     b.createdAt.getTime() - a.createdAt.getTime()
@@ -80,7 +81,12 @@ export function renderComparison(): void {
       
       <section class="card card--glow" aria-labelledby="comparison-title">
         <h2 class="card__title" id="comparison-title"><span aria-hidden="true">🎼</span> Comparison</h2>
-        <figure class="audiogram-container" id="comparison-audiogram" role="img" aria-label="Comparison audiogram showing multiple test results">
+        <figure class="audiogram-container" id="comparison-audiogram">
+          <figcaption class="sr-only">Comparison audiogram of the selected tests' hearing thresholds by frequency. Each test uses its own line pattern, named in the table.</figcaption>
+          ${renderThresholdTable(selectedProfiles.map((p, i) => ({
+            label: `${p.name || 'Hearing Test'} (${p.createdAt.toLocaleDateString()}, ${PROFILE_LINE_STYLES[i].name} line)`,
+            profile: p,
+          })))}
         </figure>
         ${renderChangesSummary(selectedProfiles)}
       </section>
@@ -93,7 +99,9 @@ export function renderComparison(): void {
     </main>
   `;
   
-  announce('Comparison view loaded. Select tests to compare on the audiogram.');
+  if (!focusProfileId) {
+    announce('Comparison view loaded. Select tests to compare on the audiogram.');
+  }
   
   // Render comparison audiogram
   const container = document.getElementById('comparison-audiogram');
@@ -129,12 +137,20 @@ export function renderComparison(): void {
         }
       }
       
-      // Re-render to update audiogram and summary
-      renderComparison();
+      // Re-render to update audiogram and summary, keeping focus on this checkbox
+      renderComparison(profileId);
+      announce(`${selectedProfileIds.size} tests selected.`);
     });
   });
   
-  focusMain();
+  const toggled = focusProfileId
+    ? [...document.querySelectorAll<HTMLElement>('.profile-checkbox')].find(el => el.dataset.id === focusProfileId)
+    : undefined;
+  if (toggled) {
+    toggled.querySelector('input')?.focus();
+  } else {
+    focusMain();
+  }
 }
 
 function renderChangesSummary(profiles: HearingProfile[]): string {

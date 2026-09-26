@@ -96,6 +96,18 @@ describe('speech-noise screen lifecycle', () => {
     expect(mocks.sources.filter(s => s.started && !s.stopped)).toHaveLength(1);
   });
 
+  it('moves focus to the word choices when a response is needed', async () => {
+    const mocks = installMocks();
+    await loadScreen();
+
+    click('start-test');
+    await vi.advanceTimersByTimeAsync(600);
+    mocks.utterances[0].onend?.();
+    await vi.advanceTimersByTimeAsync(400);
+
+    expect(document.activeElement?.classList.contains('speech-option')).toBe(true);
+  });
+
   it('cancelling mid-trial leaves Home rendered, cancels speech and stops noise', async () => {
     const mocks = installMocks();
     await loadScreen();
