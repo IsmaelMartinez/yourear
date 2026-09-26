@@ -19,10 +19,6 @@ export class Audiogram extends AudiogramBase {
     this.draw();
   }
 
-  getCanvas(): HTMLCanvasElement {
-    return this.canvas;
-  }
-
   private draw(): void {
     this.clearCanvas();
 
@@ -57,15 +53,8 @@ export class Audiogram extends AudiogramBase {
     ctx.fill();
 
     // Median line (expected for age)
-    ctx.strokeStyle = COLORS.expectedLine;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
-    ctx.beginPath();
     const medianPoints = FREQUENCIES.map(f => ({ x: this.freqToX(f), y: this.dbToY(expected[f].median) }));
-    ctx.moveTo(medianPoints[0].x, medianPoints[0].y);
-    for (let i = 1; i < medianPoints.length; i++) ctx.lineTo(medianPoints[i].x, medianPoints[i].y);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    this.drawLine(medianPoints, COLORS.expectedLine, [5, 5]);
   }
 
   private drawLegend(): void {

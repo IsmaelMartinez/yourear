@@ -21,7 +21,7 @@ export interface HearingProfile {
 export const TEST_FREQUENCIES = [250, 500, 1000, 2000, 4000, 8000] as const;
 
 // Extended frequencies including inter-octave (half-octave) frequencies
-export const EXTENDED_FREQUENCIES = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000] as const;
+const EXTENDED_FREQUENCIES = [125, 250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000] as const;
 
 export interface TestState {
   currentFrequency: number;
@@ -55,7 +55,7 @@ export const DEFAULT_TEST_CONFIG: TestConfig = {
 };
 
 // Quick test: 3 key frequencies, faster timing (~2 minutes)
-export const QUICK_TEST_FREQUENCIES = [1000, 4000, 8000] as const;
+const QUICK_TEST_FREQUENCIES = [1000, 4000, 8000] as const;
 
 export const QUICK_TEST_CONFIG: TestConfig = {
   ...DEFAULT_TEST_CONFIG,

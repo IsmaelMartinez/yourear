@@ -3,15 +3,15 @@
  */
 
 import { getAppContainer, onClick, announce, focusMain, escapeHtml } from '../utils/dom';
-import { getAllProfiles, getLatestProfile } from '../storage/profile';
+import { getAllProfiles } from '../storage/profile';
 import { Audiogram } from '../ui/audiogram';
 import { navigateTo } from '../state/app-state';
 import { HearingProfile } from '../types';
 
 export function renderHome(): void {
   const app = getAppContainer();
-  const profiles = getAllProfiles();
-  const latest = getLatestProfile();
+  const profiles = getAllProfiles().sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const latest = profiles[0];
   
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="YourEar Home">
@@ -114,11 +114,9 @@ function renderTestHistory(profiles: HearingProfile[]): string {
           </button>
         `).join('')}
       </nav>
-      ${profiles.length >= 2 ? `
-        <button class="btn btn--secondary mt-md w-full" id="compare-tests">
-          <span aria-hidden="true">📈</span> Compare Tests Over Time
-        </button>
-      ` : ''}
+      <button class="btn btn--secondary mt-md w-full" id="compare-tests">
+        <span aria-hidden="true">📈</span> Compare Tests Over Time
+      </button>
     </section>
   `;
 }
@@ -169,18 +167,9 @@ function renderFooter(): string {
 
 function bindProfileClickHandlers(profiles: HearingProfile[]): void {
   document.querySelectorAll('.profile-item').forEach(item => {
-    const handler = () => {
+    item.addEventListener('click', () => {
       const profile = profiles.find(p => p.id === item.getAttribute('data-id'));
       if (profile) navigateTo('results', { profile });
-    };
-    
-    item.addEventListener('click', handler);
-    item.addEventListener('keydown', (e: Event) => {
-      const keyEvent = e as KeyboardEvent;
-      if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
-        keyEvent.preventDefault();
-        handler();
-      }
     });
   });
 }

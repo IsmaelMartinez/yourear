@@ -5,14 +5,8 @@
 import { HearingProfile, calculatePTA } from '../types';
 import { AudiogramBase, COLORS, PADDING } from './audiogram-base';
 
-// Distinct colors for different profiles
-const PROFILE_COLORS = [
-  '#ff6b6b', // Red
-  '#4ecdc4', // Teal
-  '#fbbf24', // Yellow
-  '#a78bfa', // Purple
-  '#34d399', // Green
-];
+// Distinct colors for different profiles: the ear and expected-line colours, then purple and green
+const PROFILE_COLORS = [COLORS.rightEar, COLORS.leftEar, COLORS.expectedLine, '#a78bfa', '#34d399'];
 
 // Line patterns so profiles can be told apart without colour; names are used in the text table
 export const PROFILE_LINE_STYLES = [

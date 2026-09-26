@@ -22,7 +22,7 @@ const FFT_SIZE = 2048;
 /** Warning threshold above which ambient noise starts to affect test accuracy. */
 export const NOISE_WARNING_THRESHOLD_DB = 40;
 
-export interface NoiseSample {
+interface NoiseSample {
   /** Instantaneous approximate dB SPL. */
   db: number;
   /** Running peak dB SPL since meter start. */
