@@ -52,7 +52,7 @@ Analysis of how YourEar compares to clinical audiometry and what can be done to 
 | Requirement | Implemented | Notes |
 |-------------|-------------|-------|
 | Pure tones | ✅ | OscillatorNode |
-| Octave frequencies | ✅ | 250-8000 Hz |
+| Test frequencies | ✅ | Octaves 250-8000 Hz; Detailed mode adds 125, 750, 1500, 3000 and 6000 Hz |
 | Modified Hughson-Westlake | ✅ | Simplified |
 | Sound booth | ❌ | User's environment |
 | Calibration | ❌ | Not possible |
@@ -65,10 +65,10 @@ Analysis of how YourEar compares to clinical audiometry and what can be done to 
 
 ### Short Term (Low Effort)
 
-**1. Environmental Noise Check**
-- Use microphone to measure ambient noise
-- Warn if >40 dB background
-- Suggest quieter time/place
+**1. Environmental Noise Check** ✅ Done
+- Optional microphone check on the calibration screen (`src/audio/noise-meter.ts`)
+- Warns when the peak exceeds 40 dB (approximate, uncalibrated SPL)
+- Non-blocking: the user can proceed regardless
 
 **2. Reference Tone Calibration**
 - Play tone, ask user to match to "conversational speech level"
