@@ -722,8 +722,12 @@ body::before {
   height: 12px;
   background: var(--bg-tertiary);
   border-radius: var(--radius-full);
-  outline: none;
   cursor: pointer;
+}
+
+.tinnitus-slider:focus-visible {
+  outline: 3px solid var(--accent-primary);
+  outline-offset: 4px;
 }
 
 .tinnitus-slider::-webkit-slider-thumb {

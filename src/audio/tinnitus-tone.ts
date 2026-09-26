@@ -4,7 +4,13 @@
 
 import { ensureRunning } from './audio-context';
 
+/** Time constant (s) for gain ramps; avoids clicks on start, stop and volume changes */
+const RAMP_TIME_CONSTANT = 0.015;
+/** Delay (s) before stopping the oscillator so the fade-out completes (~5 time constants) */
+const FADE_OUT_DURATION = RAMP_TIME_CONSTANT * 5;
+
 // Active nodes
+let ctx: AudioContext | null = null;
 let oscillator: OscillatorNode | null = null;
 let gainNode: GainNode | null = null;
 
@@ -17,11 +23,9 @@ export interface TinnitusSettings {
   isPlaying: boolean;
 }
 
-let currentSettings: TinnitusSettings = {
-  frequency: 4000,
-  volume: 30,
-  isPlaying: false,
-};
+const DEFAULTS = { frequency: 4000, volume: 30 } as const;
+
+let currentSettings: Omit<TinnitusSettings, 'isPlaying'> = { ...DEFAULTS };
 
 /**
  * Convert dB to linear gain
@@ -33,42 +37,48 @@ function dbToGain(db: number): number {
 }
 
 /**
- * Start playing the tinnitus matching tone
+ * Start playing the tinnitus matching tone (fades in)
  */
 export async function startTinnitusTone(): Promise<void> {
   if (oscillator) return; // Already playing
 
-  const ctx = await ensureRunning();
-  
-  oscillator = ctx.createOscillator();
+  const audioCtx = await ensureRunning();
+  if (oscillator) return; // Started by a concurrent call while awaiting
+
+  ctx = audioCtx;
+  oscillator = audioCtx.createOscillator();
   oscillator.type = 'sine';
   oscillator.frequency.value = currentSettings.frequency;
-  
-  gainNode = ctx.createGain();
-  gainNode.gain.value = dbToGain(currentSettings.volume);
-  
-  oscillator.connect(gainNode).connect(ctx.destination);
+
+  gainNode = audioCtx.createGain();
+  gainNode.gain.value = 0;
+  gainNode.gain.setTargetAtTime(dbToGain(currentSettings.volume), audioCtx.currentTime, RAMP_TIME_CONSTANT);
+
+  oscillator.connect(gainNode).connect(audioCtx.destination);
   oscillator.start();
-  
-  currentSettings.isPlaying = true;
 }
 
 /**
- * Stop the tinnitus matching tone
+ * Stop the tinnitus matching tone (fades out, then releases the nodes)
  */
 export function stopTinnitusTone(): void {
-  if (oscillator) {
-    try {
-      oscillator.stop();
-    } catch { /* already stopped */ }
-    oscillator.disconnect();
-    oscillator = null;
-  }
-  if (gainNode) {
-    gainNode.disconnect();
-    gainNode = null;
-  }
-  currentSettings.isPlaying = false;
+  if (!oscillator || !gainNode || !ctx) return;
+
+  const osc = oscillator;
+  const gain = gainNode;
+  const now = ctx.currentTime;
+  oscillator = null;
+  gainNode = null;
+
+  gain.gain.cancelScheduledValues(now);
+  gain.gain.setTargetAtTime(0, now, RAMP_TIME_CONSTANT);
+  osc.onended = () => {
+    osc.disconnect();
+    gain.disconnect();
+  };
+  try {
+    osc.stop(now + FADE_OUT_DURATION);
+  } catch { /* already stopped */ }
 }
 
 /**
@@ -82,12 +92,12 @@ export function setTinnitusFrequency(hz: number): void {
 }
 
 /**
- * Update the volume in real-time
+ * Update the volume in real-time (ramped to avoid clicks)
  */
 export function setTinnitusVolume(db: number): void {
   currentSettings.volume = Math.max(0, Math.min(60, db));
-  if (gainNode) {
-    gainNode.gain.value = dbToGain(currentSettings.volume);
+  if (gainNode && ctx) {
+    gainNode.gain.setTargetAtTime(dbToGain(currentSettings.volume), ctx.currentTime, RAMP_TIME_CONSTANT);
   }
 }
 
@@ -95,18 +105,13 @@ export function setTinnitusVolume(db: number): void {
  * Get current settings
  */
 export function getTinnitusSettings(): TinnitusSettings {
-  return { ...currentSettings };
+  return { ...currentSettings, isPlaying: oscillator !== null };
 }
 
 /**
- * Reset to defaults
+ * Stop playback and reset to defaults
  */
 export function resetTinnitusSettings(): void {
   stopTinnitusTone();
-  currentSettings = {
-    frequency: 4000,
-    volume: 30,
-    isPlaying: false,
-  };
+  currentSettings = { ...DEFAULTS };
 }
-
