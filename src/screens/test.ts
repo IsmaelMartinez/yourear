@@ -182,8 +182,8 @@ function updateTestDisplay(state: TestState): void {
 
   const frequency = document.getElementById('test-frequency');
   if (frequency) {
-    frequency.setAttribute('aria-label', `Testing frequency: ${freqSpoken}`);
-    frequency.innerHTML = `${freqLabel}<span class="test-display__frequency-unit" aria-hidden="true">${freqUnit}</span>`;
+    // aria-label is ignored on a plain div, so the spoken form goes in sr-only text
+    frequency.innerHTML = `<span aria-hidden="true">${freqLabel}<span class="test-display__frequency-unit">${freqUnit}</span></span><span class="sr-only">Testing frequency: ${freqSpoken}</span>`;
   }
   const ear = document.getElementById('test-ear');
   if (ear) {

@@ -109,7 +109,7 @@ describe('test screen keyboard and focus', () => {
 
     expect(document.getElementById('not-heard')).toBe(no);
     expect(document.activeElement).toBe(no);
-    expect(document.querySelector('.test-display__frequency')?.textContent).toContain('2');
+    expect(document.querySelector('.test-display__frequency')?.textContent).toContain('Testing frequency: 2 kilohertz');
     expect(document.querySelector('.test-display__ear')?.textContent).toContain('Left');
   });
 
