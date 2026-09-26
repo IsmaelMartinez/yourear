@@ -4,6 +4,8 @@ Contributions are welcome! This document provides guidelines for contributing to
 
 ## Getting Started
 
+You need Node.js at the version pinned in `.nvmrc` (run `nvm use` if you use nvm), which is the version CI uses.
+
 ```bash
 # Clone the repository
 git clone https://github.com/IsmaelMartinez/yourear.git
@@ -35,9 +37,10 @@ npm run preview
 ### Running Tests
 
 ```bash
-npm run test        # Watch mode
-npm run test:run    # Single run
+npm test               # Watch mode (keeps running)
+npm run test:run       # Single run, as in CI
 npm run test:coverage  # With coverage report
+npm run typecheck      # Type-check with tsc (Vitest does not type-check)
 ```
 
 ## Project Structure
@@ -56,11 +59,14 @@ yourear/
 │   │   ├── tinnitus.ts       # Tinnitus frequency matcher
 │   │   └── speech-noise.ts   # Speech-in-noise test
 │   ├── audio/
+│   │   ├── audio-context.ts  # Shared AudioContext singleton
 │   │   ├── tone-generator.ts # Pure tone synthesis (Web Audio API)
 │   │   ├── tinnitus-tone.ts  # Adjustable tone for tinnitus matching
 │   │   ├── speech-noise.ts   # Noise generator and speech synthesis
+│   │   ├── noise-meter.ts    # Microphone ambient noise check
 │   │   └── hearing-test.ts   # Test logic (Hughson-Westlake procedure)
 │   ├── ui/
+│   │   ├── audiogram-base.ts # Shared audiogram canvas drawing
 │   │   ├── audiogram.ts      # Canvas audiogram visualization
 │   │   └── comparison-audiogram.ts  # Multi-profile overlay chart
 │   ├── storage/
@@ -96,6 +102,7 @@ yourear/
 - Export results as PDF
 - Compare multiple profiles over time
 - PWA support (offline use, installable)
+- Environmental noise check (optional microphone check on the calibration screen)
 
 ## Technical Limitations
 
@@ -121,8 +128,8 @@ If you're interested in this, check out DIY bat detector kits (~£50) which use 
 
 1. Create a feature branch from `main`
 2. Make your changes
-3. Ensure tests pass (`npm run test:run`)
+3. Run `npm run test:run` and `npm run typecheck` and make sure both pass
 4. Submit a PR to `main`
 
-All PRs require CI to pass before merging.
+All PRs require CI to pass before merging. CI also runs `npm run build`.
 

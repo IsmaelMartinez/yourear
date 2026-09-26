@@ -1,5 +1,30 @@
 # CLAUDE.md
 
+YourEar is a browser-based hearing test: a Vite + TypeScript PWA with no UI framework, deployed to GitHub Pages. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full project tree and setup.
+
+## Commands
+
+Use `npm run test:run` (single run) rather than `npm test`, which starts Vitest in watch mode. Run `npm run typecheck` (`tsc --noEmit`) as well, because Vitest does not type-check. `npm run build` runs `tsc` then `vite build`, as CI does. The Node version lives in `.nvmrc`.
+
+## Architecture
+
+- `src/main.ts` is the router: `render()` switches on `getState().screen` and calls each screen's cleanup (`cleanupTestScreen`, `cleanupTinnitusScreen`, `cleanupSpeechNoiseScreen`) when leaving it.
+- `src/screens/` has one file per route; each renders template-string HTML into the app container and wires its own handlers.
+- `src/audio/` holds tone, tinnitus, speech/noise and mic noise-meter code; every module shares the singleton `AudioContext` from `audio-context.ts` (`getAudioContext()`, `ensureRunning()`), never a new one.
+- `src/state/app-state.ts` owns app state and navigation; `src/services/` holds the test runner and jsPDF export; `src/storage/profile.ts` persists profiles in localStorage under `yourear_profiles`.
+- `src/types/index.ts` holds the test configs (`DEFAULT_TEST_CONFIG`, `QUICK_TEST_CONFIG`, `DETAILED_TEST_CONFIG`), frequency lists, hearing-loss grading and age-based expected thresholds.
+
+## Conventions
+
+- No UI framework. Screen reader announcements go through `announce()` in `src/utils/dom.ts` (ADR 007).
+- Vite `base` is `/yourear/` (GitHub Pages), so absolute asset paths must include it.
+- `?demo=true` seeds a demo profile, which is useful when checking the results and comparison screens.
+- Tests run under jsdom. There is no shared Web Audio mock; tests that need audio replace `globalThis.AudioContext` (and `navigator.mediaDevices` for the noise meter) and restore it afterwards.
+
+## Workflows and dependencies
+
+`release.yml` and `osv-scanner.yml` are Repo Butler templates, so change them upstream rather than editing them by hand. `vitest` and `@vitest/*` are co-versioned and must be bumped together (Dependabot groups them). Git tags and releases are the version source of truth, and `package.json` mirrors the latest release.
+
 ## Repo Butler
 
 This repo is monitored by [Repo Butler](https://github.com/IsmaelMartinez/repo-butler), a portfolio health agent that observes repo health daily and generates dashboards, governance proposals, and tier classifications.

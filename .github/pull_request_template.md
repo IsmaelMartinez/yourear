@@ -14,5 +14,5 @@ Closes #
 
 ## Checklist
 
-- [ ] I have tested my changes
+- [ ] `npm run test:run` and `npm run typecheck` pass
 - [ ] I have updated documentation if needed

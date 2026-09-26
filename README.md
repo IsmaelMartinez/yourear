@@ -13,11 +13,11 @@ YourEar plays pure tones through your headphones and measures the quietest level
 
 **Three test modes:** Quick (~2 min), Full (~8 min), or Detailed (~15 min, including inter-octave frequencies).
 
-**Extra tools:** Tinnitus frequency matcher, speech-in-noise test, PDF export, and profile comparison over time.
+**Extra tools:** Optional ambient noise check (uses your microphone to warn if the room is too loud), tinnitus frequency matcher, speech-in-noise test, PDF export, and profile comparison over time.
 
 All data stays in your browser's local storage. Works offline as a PWA.
 
-Built with **TypeScript**, **Vite**, the **Web Audio API** (tone synthesis), and the **Canvas API** (audiogram charts). No heavy frameworks -- just ~450 KB of production JS.
+Built with **TypeScript**, **Vite**, the **Web Audio API** (tone synthesis), and the **Canvas API** (audiogram charts). No UI framework -- the main JS bundle is about 150 KB gzipped.
 
 ## Getting started
 
