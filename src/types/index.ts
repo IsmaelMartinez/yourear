@@ -106,6 +106,43 @@ export function classifyHearingLoss(thresholdDb: number): HearingLossGrade {
   return 'profound';
 }
 
+export const GRADE_LABELS: Record<HearingLossGrade, { icon: string; label: string }> = {
+  'normal': { icon: '✅', label: 'Normal' },
+  'slight': { icon: '🟢', label: 'Slight loss' },
+  'mild': { icon: '🟡', label: 'Mild loss' },
+  'moderate': { icon: '🟠', label: 'Moderate loss' },
+  'moderately-severe': { icon: '🟠', label: 'Moderately severe loss' },
+  'severe': { icon: '🔴', label: 'Severe loss' },
+  'profound': { icon: '🔴', label: 'Profound loss' },
+};
+
+/** Standard pure-tone average frequencies */
+export const PTA_FREQUENCIES: readonly number[] = [500, 1000, 2000];
+
+export interface PTAResult {
+  value: number;
+  frequencies: number[];
+  /** False when fewer than two PTA frequencies were tested (e.g. Quick Test) and all tested frequencies were averaged */
+  standard: boolean;
+}
+
+/**
+ * Pure-tone average for one ear over 500/1000/2000 Hz, falling back to the
+ * average of every tested frequency when fewer than two of those were tested.
+ */
+export function calculatePTA(thresholds: HearingThreshold[], ear: 'rightEar' | 'leftEar'): PTAResult | null {
+  const tested = thresholds.filter(t => Number.isFinite(t[ear]));
+  const ptaTested = tested.filter(t => PTA_FREQUENCIES.includes(t.frequency));
+  const standard = ptaTested.length >= 2;
+  const used = standard ? ptaTested : tested;
+  if (used.length === 0) return null;
+  return {
+    value: used.reduce((sum, t) => sum + (t[ear] as number), 0) / used.length,
+    frequencies: used.map(t => t.frequency),
+    standard,
+  };
+}
+
 /**
  * Age-based expected hearing thresholds
  * Based on ISO 7029 standard for otologically normal persons
@@ -141,4 +178,31 @@ export function getExpectedThresholds(age: number): Record<number, { p10: number
     6000: { p10: calcP10(0.85, 0.45), median: Math.round(ageOffset * 0.85), p90: Math.round(ageOffset * 1.3 + 18) },
     8000: { p10: calcP10(1.0, 0.5), median: Math.round(ageOffset * 1.0), p90: Math.round(ageOffset * 1.5 + 20) },
   };
+}
+
+export type AgeVerdict = 'better' | 'typical' | 'worse';
+
+export const AGE_VERDICT_LABELS: Record<AgeVerdict, { icon: string; label: string }> = {
+  better: { icon: '✨', label: 'Your hearing is better than or equal to average for your age.' },
+  typical: { icon: '👍', label: 'Your hearing is typical for your age.' },
+  worse: { icon: '📋', label: 'Your hearing shows more loss than typical for your age.' },
+};
+
+/**
+ * Compare the mean of the available ear PTAs with the age-expected median,
+ * taken per ear over the frequencies that ear's PTA used.
+ */
+export function compareToAge(
+  age: number,
+  right: PTAResult | null,
+  left: PTAResult | null
+): { average: number; expected: number; verdict: AgeVerdict } | null {
+  const ptas = [right, left].filter((p): p is PTAResult => p !== null);
+  if (ptas.length === 0) return null;
+  const medians = getExpectedThresholds(age);
+  const mean = (xs: number[]) => xs.reduce((sum, x) => sum + x, 0) / xs.length;
+  const expected = mean(ptas.map(p => mean(p.frequencies.map(f => medians[f].median))));
+  const average = mean(ptas.map(p => p.value));
+  const verdict = average <= expected ? 'better' : average <= expected + 10 ? 'typical' : 'worse';
+  return { average, expected, verdict };
 }

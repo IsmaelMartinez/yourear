@@ -4,7 +4,7 @@
  */
 
 import { jsPDF } from 'jspdf';
-import { HearingProfile, classifyHearingLoss, getExpectedThresholds } from '../types';
+import { HearingProfile, classifyHearingLoss, calculatePTA, compareToAge, formatFrequency, GRADE_LABELS, AGE_VERDICT_LABELS } from '../types';
 
 /** Export options for customizing the PDF */
 export interface ExportOptions {
@@ -72,49 +72,28 @@ export async function exportToPDF(
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   
-  // Calculate PTA for each ear
-  const ptaFreqs = [500, 1000, 2000];
-  const calcPTA = (ear: 'rightEar' | 'leftEar') => {
-    const values = ptaFreqs
-      .map(f => profile.thresholds.find(t => t.frequency === f)?.[ear])
-      .filter((v): v is number => v !== null);
-    return values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
-  };
-  
-  const rightPTA = calcPTA('rightEar');
-  const leftPTA = calcPTA('leftEar');
-  
-  if (rightPTA !== null) {
-    const grade = classifyHearingLoss(rightPTA);
-    doc.text(`Right Ear: ${rightPTA.toFixed(0)} dB HL (${formatGrade(grade)})`, margin, y);
-    y += 6;
-  }
-  
-  if (leftPTA !== null) {
-    const grade = classifyHearingLoss(leftPTA);
-    doc.text(`Left Ear: ${leftPTA.toFixed(0)} dB HL (${formatGrade(grade)})`, margin, y);
-    y += 6;
-  }
-  
-  // Age comparison
-  if (includeAgeComparison && profile.age && (rightPTA !== null || leftPTA !== null)) {
-    y += 4;
-    const expected = getExpectedThresholds(profile.age);
-    const expectedPTA = (expected[500].median + expected[1000].median + expected[2000].median) / 3;
-    
-    doc.text(`Expected PTA for age ${profile.age}: ~${expectedPTA.toFixed(0)} dB HL`, margin, y);
-    y += 6;
-    
-    const avgPTA = ((rightPTA || 0) + (leftPTA || 0)) / (rightPTA && leftPTA ? 2 : 1);
-    let comparison = '';
-    if (avgPTA <= expectedPTA) {
-      comparison = 'Your hearing is better than or equal to average for your age.';
-    } else if (avgPTA <= expectedPTA + 10) {
-      comparison = 'Your hearing is typical for your age.';
-    } else {
-      comparison = 'Your hearing shows more loss than typical for your age.';
+  const rightPTA = calculatePTA(profile.thresholds, 'rightEar');
+  const leftPTA = calculatePTA(profile.thresholds, 'leftEar');
+
+  for (const [name, pta] of [['Right', rightPTA], ['Left', leftPTA]] as const) {
+    if (pta) {
+      doc.text(`${name} Ear: ${pta.value.toFixed(0)} dB HL (${GRADE_LABELS[classifyHearingLoss(pta.value)].label})`, margin, y);
+      y += 6;
     }
-    doc.text(comparison, margin, y);
+  }
+  const standard = [rightPTA, leftPTA].every(p => !p || p.standard);
+  if (!standard) {
+    doc.text('Average of all tested frequencies (fewer than two of 500/1000/2000 Hz available).', margin, y);
+    y += 6;
+  }
+
+  // Age comparison
+  const age = includeAgeComparison && profile.age ? compareToAge(profile.age, rightPTA, leftPTA) : null;
+  if (age) {
+    y += 4;
+    doc.text(`Expected ${standard ? 'PTA' : 'average'} for age ${profile.age}: ~${age.expected.toFixed(0)} dB HL`, margin, y);
+    y += 6;
+    doc.text(AGE_VERDICT_LABELS[age.verdict].label, margin, y);
     y += 10;
   }
   
@@ -142,8 +121,7 @@ export async function exportToPDF(
   // Table rows
   doc.setFont('helvetica', 'normal');
   profile.thresholds.forEach(t => {
-    const freqStr = t.frequency >= 1000 ? `${t.frequency / 1000}k Hz` : `${t.frequency} Hz`;
-    doc.text(freqStr, margin, y);
+    doc.text(`${formatFrequency(t.frequency)} Hz`, margin, y);
     doc.text(t.rightEar !== null ? String(t.rightEar) : '-', margin + colWidths[0], y);
     doc.text(t.leftEar !== null ? String(t.leftEar) : '-', margin + colWidths[0] + colWidths[1], y);
     y += 6;
@@ -175,17 +153,3 @@ export async function exportToPDF(
   const filename = `yourear-results-${profile.createdAt.toISOString().split('T')[0]}.pdf`;
   doc.save(filename);
 }
-
-function formatGrade(grade: string): string {
-  const grades: Record<string, string> = {
-    'normal': 'Normal',
-    'slight': 'Slight loss',
-    'mild': 'Mild loss',
-    'moderate': 'Moderate loss',
-    'moderately-severe': 'Moderately severe loss',
-    'severe': 'Severe loss',
-    'profound': 'Profound loss',
-  };
-  return grades[grade] || grade;
-}
-
