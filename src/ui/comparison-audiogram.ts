@@ -14,9 +14,19 @@ const PROFILE_COLORS = [
   '#34d399', // Green
 ];
 
+// Line patterns so profiles can be told apart without colour; names are used in the text table
+export const PROFILE_LINE_STYLES = [
+  { name: 'solid', dash: [] },
+  { name: 'dashed', dash: [10, 6] },
+  { name: 'dotted', dash: [2, 5] },
+  { name: 'dash-dot', dash: [12, 5, 2, 5] },
+  { name: 'long-dashed', dash: [20, 8] },
+] as const;
+
 interface ProfileWithStyle {
   profile: HearingProfile;
   color: string;
+  dash: number[];
   opacity: number;
 }
 
@@ -32,6 +42,7 @@ export class ComparisonAudiogram extends AudiogramBase {
     this.profiles = profiles.slice(0, 5).map((profile, index) => ({
       profile,
       color: PROFILE_COLORS[index],
+      dash: [...PROFILE_LINE_STYLES[index].dash],
       opacity: index === 0 ? 1 : 0.7,
     }));
     this.draw();
@@ -43,9 +54,9 @@ export class ComparisonAudiogram extends AudiogramBase {
     this.drawLabels();
 
     // Draw all profiles (oldest first so newest is on top)
-    [...this.profiles].reverse().forEach(({ profile, color, opacity }) => {
+    [...this.profiles].reverse().forEach(({ profile, color, dash, opacity }) => {
       this.ctx.globalAlpha = opacity;
-      this.drawThresholdData(profile.thresholds, color, color, 6);
+      this.drawThresholdData(profile.thresholds, color, color, 6, dash);
       this.ctx.globalAlpha = 1;
     });
 
@@ -61,13 +72,13 @@ export class ComparisonAudiogram extends AudiogramBase {
     this.ctx.font = '11px "DM Sans", sans-serif';
     this.ctx.textAlign = 'left';
 
-    this.profiles.forEach(({ profile, color }, index) => {
+    this.profiles.forEach(({ profile, color, dash }, index) => {
       const dateStr = profile.createdAt.toLocaleDateString();
       const label = `${dateStr}${profile.age ? ` (${profile.age}y)` : ''}`;
 
-      this.ctx.fillStyle = color;
+      // Legend swatch is a sample of the series' line pattern, not just a colour block
       this.ctx.globalAlpha = index === 0 ? 1 : 0.7;
-      this.ctx.fillRect(x - 10, y - 6, 20, 12);
+      this.drawLine([{ x: x - 12, y }, { x: x + 12, y }], color, dash);
       this.ctx.globalAlpha = 1;
 
       this.ctx.fillStyle = COLORS.text;

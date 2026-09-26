@@ -136,7 +136,7 @@ export abstract class AudiogramBase {
     ctx.restore();
   }
 
-  protected drawThresholdData(thresholds: HearingThreshold[], rightColor: string, leftColor: string, markerSize = 8): void {
+  protected drawThresholdData(thresholds: HearingThreshold[], rightColor: string, leftColor: string, markerSize = 8, dash: number[] = []): void {
     const rightPoints: { x: number; y: number }[] = [];
     const leftPoints: { x: number; y: number }[] = [];
 
@@ -148,8 +148,8 @@ export abstract class AudiogramBase {
       if (t.leftEar !== null) leftPoints.push({ x, y: this.dbToY(t.leftEar) });
     });
 
-    this.drawLine(rightPoints, rightColor);
-    this.drawLine(leftPoints, leftColor);
+    this.drawLine(rightPoints, rightColor, dash);
+    this.drawLine(leftPoints, leftColor, dash);
 
     thresholds.forEach(t => {
       const x = this.freqToX(t.frequency);
@@ -158,14 +158,16 @@ export abstract class AudiogramBase {
     });
   }
 
-  protected drawLine(points: { x: number; y: number }[], color: string): void {
+  protected drawLine(points: { x: number; y: number }[], color: string, dash: number[] = []): void {
     if (points.length < 2) return;
     this.ctx.strokeStyle = color;
     this.ctx.lineWidth = 2;
+    this.ctx.setLineDash(dash);
     this.ctx.beginPath();
     this.ctx.moveTo(points[0].x, points[0].y);
     points.slice(1).forEach(p => this.ctx.lineTo(p.x, p.y));
     this.ctx.stroke();
+    this.ctx.setLineDash([]);
   }
 
   protected drawCircle(x: number, y: number, color: string, size = 8): void {

@@ -28,22 +28,8 @@ export function announce(message: string, priority: 'polite' | 'assertive' = 'po
 }
 ```
 
-### Audiogram Description
-Located in `src/screens/results.ts`:
-```typescript
-function generateAudiogramDescription(profile: HearingProfile): string {
-  const lines: string[] = ['Audiogram results:'];
-  profile.thresholds.forEach(t => {
-    const parts: string[] = [];
-    if (t.rightEar !== null) parts.push(`Right ear: ${t.rightEar} decibels`);
-    if (t.leftEar !== null) parts.push(`Left ear: ${t.leftEar} decibels`);
-    if (parts.length) {
-      lines.push(`At ${formatFrequency(t.frequency, 'spoken')}: ${parts.join(', ')}.`);
-    }
-  });
-  return lines.join(' ');
-}
-```
+### Audiogram Data
+The audiogram canvases are `aria-hidden`, so `renderThresholdTable()` in `src/ui/threshold-table.ts` adds a visually hidden table inside each chart's `<figure>` listing every tested frequency with right and left thresholds (one column pair per profile on the comparison screen). The figures carry no `role="img"`, which would make their captions and tables presentational. Comparison series also differ by line pattern, not only colour.
 
 ### Key Accessibility Features
 | Feature | Implementation |
