@@ -171,6 +171,14 @@ describe('compareToAge', () => {
     expect(result?.verdict).toBe('better');
   });
 
+  it('averages the expected median per ear when ears used different frequencies', () => {
+    const m = getExpectedThresholds(40);
+    const quick = { value: 0, frequencies: [1000, 4000, 8000], standard: false };
+    const std = { value: 0, frequencies: [500, 1000, 2000], standard: true };
+    const perEar = [(m[1000].median + m[4000].median + m[8000].median) / 3, (m[500].median + m[1000].median + m[2000].median) / 3];
+    expect(compareToAge(40, std, quick)?.expected).toBeCloseTo((perEar[0] + perEar[1]) / 2);
+  });
+
   it('returns null when neither ear has a PTA', () => {
     expect(compareToAge(40, null, null)).toBeNull();
   });

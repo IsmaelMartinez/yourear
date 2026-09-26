@@ -189,8 +189,8 @@ export const AGE_VERDICT_LABELS: Record<AgeVerdict, { icon: string; label: strin
 };
 
 /**
- * Compare the mean of the available ear PTAs with the age-expected median
- * over the same frequencies.
+ * Compare the mean of the available ear PTAs with the age-expected median,
+ * taken per ear over the frequencies that ear's PTA used.
  */
 export function compareToAge(
   age: number,
@@ -200,9 +200,9 @@ export function compareToAge(
   const ptas = [right, left].filter((p): p is PTAResult => p !== null);
   if (ptas.length === 0) return null;
   const medians = getExpectedThresholds(age);
-  const freqs = [...new Set(ptas.flatMap(p => p.frequencies))];
-  const expected = freqs.reduce((sum, f) => sum + medians[f].median, 0) / freqs.length;
-  const average = ptas.reduce((sum, p) => sum + p.value, 0) / ptas.length;
+  const mean = (xs: number[]) => xs.reduce((sum, x) => sum + x, 0) / xs.length;
+  const expected = mean(ptas.map(p => mean(p.frequencies.map(f => medians[f].median))));
+  const average = mean(ptas.map(p => p.value));
   const verdict = average <= expected ? 'better' : average <= expected + 10 ? 'typical' : 'worse';
   return { average, expected, verdict };
 }

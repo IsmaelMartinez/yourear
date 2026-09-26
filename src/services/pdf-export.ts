@@ -83,7 +83,7 @@ export async function exportToPDF(
   }
   const standard = [rightPTA, leftPTA].every(p => !p || p.standard);
   if (!standard) {
-    doc.text('Average of tested frequencies (500/2000 Hz not tested).', margin, y);
+    doc.text('Average of all tested frequencies (fewer than two of 500/1000/2000 Hz available).', margin, y);
     y += 6;
   }
 

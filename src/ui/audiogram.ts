@@ -112,7 +112,7 @@ export function generateSummary(profile: HearingProfile): string {
   }
   const standard = [rightPTA, leftPTA].every(p => !p || p.standard);
   if (!standard) {
-    lines.push('Average of tested frequencies (500/2000 Hz not tested). Use Full or Detailed Test for a true PTA.');
+    lines.push('Average of all tested frequencies (fewer than two of 500/1000/2000 Hz available). Use Full or Detailed Test for a true PTA.');
   }
 
   const age = profile.age ? compareToAge(profile.age, rightPTA, leftPTA) : null;
