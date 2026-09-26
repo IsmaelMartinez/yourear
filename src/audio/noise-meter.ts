@@ -104,9 +104,7 @@ export async function startNoiseMeter(
   };
 
   const interval = setInterval(sample, SAMPLE_INTERVAL_MS);
-  sample();
-
-  return {
+  const handle: NoiseMeterHandle = {
     stop() {
       if (stopped) return;
       stopped = true;
@@ -116,4 +114,14 @@ export async function startNoiseMeter(
       stream.getTracks().forEach((track) => track.stop());
     },
   };
+
+  try {
+    sample();
+  } catch (error) {
+    // No handle reaches the caller, so release the microphone here
+    handle.stop();
+    throw error;
+  }
+
+  return handle;
 }

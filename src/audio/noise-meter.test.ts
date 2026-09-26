@@ -150,6 +150,27 @@ describe('noise-meter', () => {
       expect(track.stop).toHaveBeenCalled();
     });
 
+    it('stops media tracks and sampling when the first sample fails', async () => {
+      const source = createMockSource();
+      const track = createMockTrack();
+      installMockAudioContext(createMockAnalyser(0.1), source);
+
+      Object.defineProperty(navigator, 'mediaDevices', {
+        value: {
+          getUserMedia: vi.fn().mockResolvedValue({
+            getTracks: () => [track],
+          }),
+        },
+        configurable: true,
+      });
+
+      const { startNoiseMeter } = await import('./noise-meter');
+      await expect(startNoiseMeter(() => { throw new Error('callback failed'); })).rejects.toThrow('callback failed');
+      expect(track.stop).toHaveBeenCalled();
+      expect(source.disconnect).toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
     it('invokes the callback with samples once the meter starts', async () => {
       const analyser = createMockAnalyser(0.1);
       const source = createMockSource();
