@@ -87,6 +87,14 @@ describe('tinnitus-tone', () => {
     expect(getTinnitusSettings().isPlaying).toBe(true);
   });
 
+  it('does not start a tone when stopped while the context is resuming', async () => {
+    const pending = startTinnitusTone();
+    stopTinnitusTone();
+    await pending;
+    expect(fakeCtx.createOscillator).not.toHaveBeenCalled();
+    expect(getTinnitusSettings().isPlaying).toBe(false);
+  });
+
   it('fades in on start and ramps volume changes with setTargetAtTime', async () => {
     await startTinnitusTone();
     const gain = gains[0].gain;

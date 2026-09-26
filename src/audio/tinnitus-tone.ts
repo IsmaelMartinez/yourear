@@ -13,6 +13,8 @@ const FADE_OUT_DURATION = RAMP_TIME_CONSTANT * 5;
 let ctx: AudioContext | null = null;
 let oscillator: OscillatorNode | null = null;
 let gainNode: GainNode | null = null;
+/** Bumped by stop so a start still awaiting the context bails out */
+let startGeneration = 0;
 
 /**
  * Current tinnitus tone settings
@@ -42,8 +44,10 @@ function dbToGain(db: number): number {
 export async function startTinnitusTone(): Promise<void> {
   if (oscillator) return; // Already playing
 
+  const generation = ++startGeneration;
   const audioCtx = await ensureRunning();
-  if (oscillator) return; // Started by a concurrent call while awaiting
+  // Started by a concurrent call, or stopped, while awaiting
+  if (oscillator || generation !== startGeneration) return;
 
   ctx = audioCtx;
   oscillator = audioCtx.createOscillator();
@@ -62,6 +66,7 @@ export async function startTinnitusTone(): Promise<void> {
  * Stop the tinnitus matching tone (fades out, then releases the nodes)
  */
 export function stopTinnitusTone(): void {
+  startGeneration++;
   if (!oscillator || !gainNode || !ctx) return;
 
   const osc = oscillator;
