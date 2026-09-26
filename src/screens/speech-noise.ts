@@ -35,6 +35,7 @@ interface TestState {
   currentTrial: number;
   results: SNRResults;
   waitingForResponse: boolean;
+  playbackFailed: boolean;
 }
 
 let state: TestState = createInitialState();
@@ -52,6 +53,7 @@ function createInitialState(): TestState {
     currentTrial: 0,
     results: createEmptyResults(),
     waitingForResponse: false,
+    playbackFailed: false,
   };
 }
 
@@ -106,6 +108,12 @@ function renderIntro(app: HTMLElement): void {
           </select>
         </div>
         
+        ${state.playbackFailed ? `
+          <div class="disclaimer mt-md" role="alert">
+            <span aria-hidden="true">⚠️</span> Could not play the test word. Check your connection and try again.
+          </div>
+        ` : ''}
+
         <button class="btn btn--primary btn--large mt-md w-full" id="start-test">
           <span aria-hidden="true">▶️</span> Start Test
         </button>
@@ -129,6 +137,7 @@ function renderIntro(app: HTMLElement): void {
     state.currentTrial = 0;
     state.results = createEmptyResults();
     state.usedWords = [];
+    state.playbackFailed = false;
     startNoise(noiseLevelDbfsForSNR(state.currentSNR));
     playNextWord();
   });
@@ -342,7 +351,13 @@ async function playNextWord(): Promise<void> {
   try {
     await speakWord(state.currentWord);
   } catch (e) {
+    if (token !== runToken) return;
+    // Never ask about a word that was not heard; end the run instead
     console.error('Word playback failed:', e);
+    stopNoise();
+    state = { ...createInitialState(), playbackFailed: true };
+    renderSpeechNoise();
+    return;
   }
   if (token !== runToken) return;
   

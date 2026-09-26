@@ -122,4 +122,20 @@ describe('speech-noise screen lifecycle', () => {
     expect(document.getElementById('home-screen')).not.toBeNull();
     expect(document.getElementById('main-content')).toBeNull();
   });
+
+  it('ends the run with an error instead of asking for a word that never played', async () => {
+    const mocks = installMocks();
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await loadScreen();
+
+    click('start-test');
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(document.querySelector('.speech-option')).toBeNull();
+    expect(document.getElementById('start-test')).not.toBeNull();
+    expect(document.querySelector('[role="alert"]')?.textContent).toContain('Could not play the test word');
+    expect(mocks.live()).toHaveLength(0);
+    consoleError.mockRestore();
+  });
 });
