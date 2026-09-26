@@ -2,7 +2,7 @@
  * Home screen - Landing page with test options and history
  */
 
-import { getAppContainer, onClick, announce, focusMain } from '../utils/dom';
+import { getAppContainer, onClick, announce, focusMain, escapeHtml } from '../utils/dom';
 import { getAllProfiles, getLatestProfile } from '../storage/profile';
 import { Audiogram } from '../ui/audiogram';
 import { navigateTo } from '../state/app-state';
@@ -108,8 +108,8 @@ function renderTestHistory(profiles: HearingProfile[]): string {
       <h2 class="card__title" id="history-title"><span aria-hidden="true">📁</span> Test History</h2>
       <nav class="profiles__list" aria-label="Previous test results">
         ${profiles.slice(0, 5).map(p => `
-          <button class="profile-item" data-id="${p.id}" type="button" aria-label="View ${p.name || 'Hearing Test'}${p.age ? `, age ${p.age}` : ''}, from ${p.createdAt.toLocaleDateString()}">
-            <span class="profile-item__name">${p.name || 'Hearing Test'}${p.age ? ` (${p.age}y)` : ''}</span>
+          <button class="profile-item" data-id="${escapeHtml(p.id)}" type="button" aria-label="View ${escapeHtml(p.name || 'Hearing Test')}${p.age ? `, age ${p.age}` : ''}, from ${p.createdAt.toLocaleDateString()}">
+            <span class="profile-item__name">${escapeHtml(p.name || 'Hearing Test')}${p.age ? ` (${p.age}y)` : ''}</span>
             <span class="profile-item__date" aria-hidden="true">${p.createdAt.toLocaleDateString()}</span>
           </button>
         `).join('')}

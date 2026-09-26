@@ -4,6 +4,21 @@
 
 const announcer = document.getElementById('announcer');
 
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+/**
+ * Escape a value for safe interpolation into innerHTML (text or quoted attribute)
+ */
+export function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, ch => HTML_ESCAPES[ch]);
+}
+
 /**
  * Screen reader announcement helper
  */
