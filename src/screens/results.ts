@@ -2,7 +2,7 @@
  * Results screen - Display audiogram and summary
  */
 
-import { getAppContainer, onClick, announce, focusMain } from '../utils/dom';
+import { getAppContainer, onClick, announce, focusMain, escapeHtml } from '../utils/dom';
 import { getLatestProfile } from '../storage/profile';
 import { Audiogram, generateSummary } from '../ui/audiogram';
 import { getState, navigateTo } from '../state/app-state';
@@ -30,7 +30,7 @@ export function renderResults(): void {
       <header class="header" role="banner">
         <div class="header__logo" aria-hidden="true">📊</div>
         <h1 class="header__title">Your Results</h1>
-        <p class="header__subtitle">${displayProfile.name || 'Hearing Assessment'}${displayProfile.age ? ` · Age ${displayProfile.age}` : ''}</p>
+        <p class="header__subtitle">${escapeHtml(displayProfile.name || 'Hearing Assessment')}${displayProfile.age ? ` · Age ${displayProfile.age}` : ''}</p>
       </header>
       
       <section class="card card--glow" aria-labelledby="audiogram-title">
