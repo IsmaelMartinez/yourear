@@ -6,7 +6,8 @@ import { getAppContainer, onClick, announce, focusMain, escapeHtml } from '../ut
 import { getLatestProfile } from '../storage/profile';
 import { Audiogram, generateSummary } from '../ui/audiogram';
 import { getState, navigateTo } from '../state/app-state';
-import { HearingProfile, formatFrequency } from '../types';
+import { HearingProfile } from '../types';
+import { renderThresholdTable } from '../ui/threshold-table';
 
 // Store audiogram instance for PDF export
 let currentAudiogram: Audiogram | null = null;
@@ -21,9 +22,6 @@ export function renderResults(): void {
     return; 
   }
   
-  // Generate text description for audiogram
-  const audiogramDescription = generateAudiogramDescription(displayProfile);
-  
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Hearing Test Results">
       <header class="header" role="banner">
@@ -34,8 +32,9 @@ export function renderResults(): void {
       
       <section class="card card--glow" aria-labelledby="audiogram-title">
         <h2 class="card__title" id="audiogram-title"><span aria-hidden="true">🎼</span> Your Audiogram</h2>
-        <figure class="audiogram-container" id="audiogram" role="img" aria-label="Audiogram chart showing hearing thresholds">
-          <figcaption class="sr-only">${audiogramDescription}</figcaption>
+        <figure class="audiogram-container" id="audiogram">
+          <figcaption class="sr-only">Audiogram of your hearing thresholds by frequency, in decibels hearing level. Lower values mean better hearing.</figcaption>
+          ${renderThresholdTable([{ label: '', profile: displayProfile }])}
         </figure>
         ${displayProfile.age ? renderAgeLegend(displayProfile.age) : ''}
       </section>
@@ -139,22 +138,3 @@ async function handleExportPDF(profile: HearingProfile): Promise<void> {
     }
   }
 }
-
-/**
- * Generate accessible text description of audiogram data for screen readers
- */
-function generateAudiogramDescription(profile: HearingProfile): string {
-  const lines: string[] = ['Audiogram results:'];
-  
-  profile.thresholds.forEach(t => {
-    const parts: string[] = [];
-    if (t.rightEar !== null) parts.push(`Right ear: ${t.rightEar} decibels`);
-    if (t.leftEar !== null) parts.push(`Left ear: ${t.leftEar} decibels`);
-    if (parts.length) {
-      lines.push(`At ${formatFrequency(t.frequency, 'spoken')}: ${parts.join(', ')}.`);
-    }
-  });
-  
-  return lines.join(' ');
-}
-
