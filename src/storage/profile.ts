@@ -2,7 +2,7 @@
  * Local storage for hearing profiles
  */
 
-import { HearingProfile } from '../types';
+import { HearingProfile, HearingThreshold } from '../types';
 
 const STORAGE_KEY = 'yourear_profiles';
 const BACKUP_KEY = 'yourear_profiles_backup';
@@ -17,11 +17,26 @@ interface StoredProfiles {
   unreadable: string | null;
 }
 
+const isEarLevel = (v: unknown): boolean => v === null || typeof v === 'number';
+
+function isThreshold(t: unknown): boolean {
+  if (typeof t !== 'object' || t === null) return false;
+  const { frequency, leftEar, rightEar } = t as HearingThreshold;
+  return typeof frequency === 'number' && isEarLevel(leftEar) && isEarLevel(rightEar);
+}
+
 function toProfile(entry: unknown): HearingProfile | null {
   if (typeof entry !== 'object' || entry === null) return null;
   const p = entry as HearingProfile;
-  const createdAt = new Date(p.createdAt);
-  if (typeof p.id !== 'string' || !Array.isArray(p.thresholds) || isNaN(createdAt.getTime())) {
+  // new Date(null) is the epoch, so only accept stored strings or numbers
+  const rawCreatedAt: unknown = p.createdAt;
+  const createdAt = new Date(typeof rawCreatedAt === 'string' || typeof rawCreatedAt === 'number' ? rawCreatedAt : NaN);
+  if (
+    typeof p.id !== 'string' ||
+    !Array.isArray(p.thresholds) ||
+    !p.thresholds.every(isThreshold) ||
+    isNaN(createdAt.getTime())
+  ) {
     return null;
   }
   const updatedAt = new Date(p.updatedAt);
@@ -36,7 +51,7 @@ function toProfile(entry: unknown): HearingProfile | null {
 
 function readProfiles(): StoredProfiles {
   const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) return { profiles: [], unreadable: null };
+  if (data === null) return { profiles: [], unreadable: null };
 
   let parsed: unknown;
   try {

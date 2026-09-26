@@ -190,6 +190,25 @@ describe('profile storage', () => {
       expect(profile.name).toBe('New');
     });
 
+    it('backs up an empty stored string before createProfile writes', () => {
+      localStorage.setItem('yourear_profiles', '');
+
+      createProfile(newProfile());
+
+      expect(localStorage.getItem('yourear_profiles_backup')).toBe('');
+    });
+
+    it('drops entries with malformed thresholds or a null createdAt', () => {
+      localStorage.setItem('yourear_profiles', JSON.stringify([
+        stored('ok', '2024-01-01'),
+        { ...stored('nullThreshold', '2024-01-01'), thresholds: [null] },
+        { ...stored('badEar', '2024-01-01'), thresholds: [{ frequency: 1000, leftEar: 'x', rightEar: null }] },
+        { ...stored('nullDate', '2024-01-01'), createdAt: null },
+      ]));
+
+      expect(getAllProfiles().map(p => p.name)).toEqual(['ok']);
+    });
+
     it('normalises a non-string name and non-numeric age', () => {
       localStorage.setItem('yourear_profiles', JSON.stringify([
         { ...stored('a', '2024-01-01'), name: 42, age: '<b>30</b>' },
