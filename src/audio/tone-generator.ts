@@ -7,9 +7,6 @@
 
 import { ensureRunning, getAudioContext } from './audio-context';
 
-// Re-export for consumers that imported AudioInitError from here
-export { AudioInitError } from './audio-context';
-
 // Active tone tracking
 let activeOscillator: OscillatorNode | null = null;
 let activeGain: GainNode | null = null;

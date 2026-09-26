@@ -26,8 +26,8 @@ export const COLORS = {
 };
 
 export const FREQUENCIES = [125, 250, 500, 1000, 2000, 4000, 8000];
-export const DB_MIN = -10;
-export const DB_MAX = 110;
+const DB_MIN = -10;
+const DB_MAX = 110;
 export const PADDING = { top: 40, right: 40, bottom: 60, left: 70 };
 
 export abstract class AudiogramBase {

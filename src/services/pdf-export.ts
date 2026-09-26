@@ -6,25 +6,12 @@
 import { jsPDF } from 'jspdf';
 import { HearingProfile, classifyHearingLoss, calculatePTA, compareToAge, formatFrequency, GRADE_LABELS, AGE_VERDICT_LABELS } from '../types';
 
-/** Export options for customizing the PDF */
-export interface ExportOptions {
-  includeDisclaimer?: boolean;
-  includeAgeComparison?: boolean;
-}
-
 /**
  * Generate a PDF report for a hearing profile
  * @param profile The hearing profile to export
  * @param audiogramDataUrl The audiogram canvas as a data URL
- * @param options Export customization options
  */
-export async function exportToPDF(
-  profile: HearingProfile,
-  audiogramDataUrl: string,
-  options: ExportOptions = {}
-): Promise<void> {
-  const { includeDisclaimer = true, includeAgeComparison = true } = options;
-  
+export async function exportToPDF(profile: HearingProfile, audiogramDataUrl: string): Promise<void> {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -88,7 +75,7 @@ export async function exportToPDF(
   }
 
   // Age comparison
-  const age = includeAgeComparison && profile.age ? compareToAge(profile.age, rightPTA, leftPTA) : null;
+  const age = profile.age ? compareToAge(profile.age, rightPTA, leftPTA) : null;
   if (age) {
     y += 4;
     doc.text(`Expected ${standard ? 'PTA' : 'average'} for age ${profile.age}: ~${age.expected.toFixed(0)} dB HL`, margin, y);
@@ -128,20 +115,16 @@ export async function exportToPDF(
   });
   
   // Disclaimer
-  if (includeDisclaimer) {
-    y += 10;
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.setFont('helvetica', 'italic');
-    
-    const disclaimer = 'DISCLAIMER: This is a self-assessment tool for curiosity and general awareness only. ' +
-      'It is NOT a medical diagnosis. Results may vary based on equipment, environment, and other factors. ' +
-      'Always consult a qualified audiologist for professional hearing evaluation and medical advice.';
-    
-    const lines = doc.splitTextToSize(disclaimer, contentWidth);
-    doc.text(lines, margin, y);
-    y += lines.length * 5;
-  }
+  y += 10;
+  doc.setFontSize(9);
+  doc.setTextColor(100);
+  doc.setFont('helvetica', 'italic');
+
+  const disclaimer = 'DISCLAIMER: This is a self-assessment tool for curiosity and general awareness only. ' +
+    'It is NOT a medical diagnosis. Results may vary based on equipment, environment, and other factors. ' +
+    'Always consult a qualified audiologist for professional hearing evaluation and medical advice.';
+
+  doc.text(doc.splitTextToSize(disclaimer, contentWidth), margin, y);
   
   // Footer
   doc.setFontSize(8);

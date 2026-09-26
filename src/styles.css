@@ -336,12 +336,6 @@ body::before {
   color: var(--accent-left);
 }
 
-.test-display__level {
-  font-family: var(--font-mono);
-  color: var(--text-muted);
-  margin-top: var(--spacing-sm);
-}
-
 /* Listening state - shown during tone playback */
 .listening-state {
   padding: var(--spacing-xl) 0;
@@ -1007,28 +1001,6 @@ body::before {
   display: flex;
   gap: var(--spacing-md);
   margin-top: var(--spacing-lg);
-}
-
-/* Error message styling */
-.error-message {
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  margin: var(--spacing-lg) 0;
-  text-align: center;
-}
-
-.error-message__title {
-  color: var(--accent-right);
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: var(--spacing-md);
-}
-
-.error-message__text {
-  color: var(--text-secondary);
-  line-height: 1.6;
 }
 
 /* Responsive */
