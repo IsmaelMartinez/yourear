@@ -72,7 +72,14 @@ export async function startNoiseMeter(
     );
   }
 
-  const ctx = await ensureRunning();
+  let ctx: AudioContext;
+  try {
+    ctx = await ensureRunning();
+  } catch (error) {
+    // Release the microphone we just acquired
+    stream.getTracks().forEach((track) => track.stop());
+    throw error;
+  }
   const source = ctx.createMediaStreamSource(stream);
   const analyser = ctx.createAnalyser();
   analyser.fftSize = FFT_SIZE;

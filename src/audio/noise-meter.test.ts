@@ -106,6 +106,28 @@ describe('noise-meter', () => {
       await expect(startNoiseMeter(() => {})).rejects.toBeInstanceOf(AudioInitError);
     });
 
+    it('stops media tracks when audio setup fails after getUserMedia', async () => {
+      const track = createMockTrack();
+      globalThis.AudioContext = class {
+        state = 'suspended' as AudioContextState;
+        resume = vi.fn().mockRejectedValue(new Error('blocked'));
+      } as unknown as typeof AudioContext;
+
+      Object.defineProperty(navigator, 'mediaDevices', {
+        value: {
+          getUserMedia: vi.fn().mockResolvedValue({
+            getTracks: () => [track],
+          }),
+        },
+        configurable: true,
+      });
+
+      const { startNoiseMeter } = await import('./noise-meter');
+      const { AudioInitError } = await import('./audio-context');
+      await expect(startNoiseMeter(() => {})).rejects.toBeInstanceOf(AudioInitError);
+      expect(track.stop).toHaveBeenCalled();
+    });
+
     it('invokes the callback with samples once the meter starts', async () => {
       const analyser = createMockAnalyser(0.1);
       const source = createMockSource();
