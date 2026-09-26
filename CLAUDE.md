@@ -19,7 +19,8 @@ Use `npm run test:run` (single run) rather than `npm test`, which starts Vitest 
 - No UI framework. Screen reader announcements go through `announce()` in `src/utils/dom.ts` (ADR 007).
 - Vite `base` is `/yourear/` (GitHub Pages), so absolute asset paths must include it.
 - `?demo=true` seeds a demo profile, which is useful when checking the results and comparison screens.
-- Tests run under jsdom. There is no shared Web Audio mock; tests that need audio replace `globalThis.AudioContext` (and `navigator.mediaDevices` for the noise meter) and restore it afterwards.
+- Tests run under jsdom. Tests that need audio use `installAudioContext()` and `stubGetUserMedia()` from `src/test/web-audio.ts`; they stub globals with `vi.stubGlobal`, which `unstubGlobals: true` undoes after each test, so never assign globals directly.
+- `npm run test:coverage` enforces the coverage thresholds in `vitest.config.ts` (CI runs it). They are a ratchet: raise them when coverage grows, never lower them.
 
 ## Workflows and dependencies
 

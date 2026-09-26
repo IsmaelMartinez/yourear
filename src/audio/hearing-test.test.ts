@@ -8,9 +8,26 @@ vi.mock('./tone-generator', () => ({
   stopTone: vi.fn(),
 }));
 
+/**
+ * Walk one ear-frequency through ADR 002 from the 40 dB start:
+ * heard at 40, not heard at 30, then heard twice while ascending at 35.
+ */
+async function findThreshold(test: HearingTest): Promise<void> {
+  await test.respondHeard();
+  await test.respondNotHeard();
+  await test.respondHeard();
+  await test.respondHeard();
+}
+
 describe('HearingTest', () => {
+  // Fake timers keep each test's response window from firing after it ends
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('initial state', () => {
@@ -98,13 +115,18 @@ describe('HearingTest', () => {
       expect(test.getProgress()).toBe(0);
     });
 
-    it('calculates based on completed frequencies', () => {
+    it('counts each ear-frequency threshold found as a share of the whole test', async () => {
       const test = new HearingTest({ frequencies: [1000, 2000] });
-      // 2 frequencies × 2 ears = 4 total tests
-      // Manually set responses to simulate completion
-      const state = test.getState();
-      state.responses.set('right-1000', 30);
-      expect(test.getProgress()).toBe(25); // 1/4 = 25%
+      await test.start();
+
+      // 2 frequencies x 2 ears = 4 thresholds, each worth 25%
+      await findThreshold(test);
+      expect(test.getProgress()).toBe(25);
+      await findThreshold(test);
+      expect(test.getProgress()).toBe(50);
+      await findThreshold(test);
+      await findThreshold(test);
+      expect(test.getProgress()).toBe(100);
     });
   });
 
@@ -172,14 +194,6 @@ describe('HearingTest', () => {
   });
 
   describe('stop() during a tone', () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
     /** Make the next playTone call resolve only when the returned function is called */
     function deferNextTone(): () => void {
       let finish!: () => void;
@@ -213,6 +227,147 @@ describe('HearingTest', () => {
       expect(vi.getTimerCount()).toBe(1);
       await vi.advanceTimersByTimeAsync(3000);
       expect(test.getState().currentLevel).toBe(45);
+    });
+  });
+  describe('Hughson-Westlake procedure (ADR 002)', () => {
+    it('descends 10 dB, ascends 5 dB, and records the level heard twice while ascending', async () => {
+      const test = new HearingTest({ frequencies: [1000] });
+      await test.start();
+
+      await test.respondHeard();
+      expect(test.getState().currentLevel).toBe(30);
+      await test.respondNotHeard();
+      expect(test.getState().currentLevel).toBe(35);
+      await test.respondHeard();
+      // One ascending hit re-presents the same level without recording it
+      expect(test.getState().currentLevel).toBe(35);
+      expect(test.getState().responses.size).toBe(0);
+      await test.respondHeard();
+
+      expect(test.getState().responses.get('right-1000')).toBe(35);
+    });
+
+    it('does not record ascending hits at different levels', async () => {
+      const test = new HearingTest({ frequencies: [1000] });
+      await test.start();
+
+      await test.respondHeard();    // 40 -> 30
+      await test.respondNotHeard(); // 30 -> 35, ascending
+      await test.respondHeard();    // first hit at 35
+      await test.respondNotHeard(); // 35 -> 40, hit count reset
+      await test.respondHeard();    // first hit at 40
+      expect(test.getState().responses.size).toBe(0);
+
+      await test.respondHeard();    // second hit at 40
+      expect(test.getState().responses.get('right-1000')).toBe(40);
+    });
+
+    it('records minLevel when heard below the quietest level', async () => {
+      const test = new HearingTest({ frequencies: [1000], startLevel: 0, minLevel: -10, stepDown: 10 });
+      await test.start();
+
+      await test.respondHeard(); // 0 -> -10, still in range
+      expect(test.getState().responses.size).toBe(0);
+      await test.respondHeard(); // -10 -> -20, below minLevel
+
+      expect(test.getState().responses.get('right-1000')).toBe(-10);
+    });
+
+    it('records no response when not heard above maxLevel', async () => {
+      const test = new HearingTest({ frequencies: [1000], startLevel: 85, maxLevel: 90, stepUp: 5 });
+      await test.start();
+
+      await test.respondNotHeard(); // 85 -> 90, still in range
+      expect(test.getState().currentEar).toBe('right');
+      await test.respondNotHeard(); // 90 -> 95, above maxLevel
+
+      const state = test.getState();
+      expect(state.responses.has('right-1000')).toBe(false);
+      expect(test.getResults().thresholds[0].rightEar).toBeNull();
+      // The procedure moves on rather than stalling at the ceiling
+      expect(state.currentEar).toBe('left');
+      expect(state.currentLevel).toBe(85);
+    });
+
+    it('tests every frequency in the right ear, then the left, then completes', async () => {
+      const test = new HearingTest({ frequencies: [1000, 2000] });
+      const handler = vi.fn();
+      test.on(handler);
+      await test.start();
+
+      const visited: string[] = [];
+      for (let i = 0; i < 4; i++) {
+        const { currentEar, currentFrequency, currentLevel } = test.getState();
+        visited.push(`${currentEar}-${currentFrequency}`);
+        // Each new ear-frequency restarts the descent from startLevel
+        expect(currentLevel).toBe(40);
+        await findThreshold(test);
+      }
+
+      expect(visited).toEqual(['right-1000', 'right-2000', 'left-1000', 'left-2000']);
+      expect(test.getState().phase).toBe('complete');
+      const completions = handler.mock.calls.filter(([event]) => event === 'testComplete');
+      expect(completions).toHaveLength(1);
+      expect(completions[0][1]).toMatchObject({
+        thresholds: [
+          { frequency: 1000, rightEar: 35, leftEar: 35 },
+          { frequency: 2000, rightEar: 35, leftEar: 35 },
+        ],
+      });
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('plays each tone at the current frequency, level and ear', async () => {
+      const test = new HearingTest({ frequencies: [1000], toneDuration: 1500 });
+      await test.start();
+      await test.respondHeard();
+
+      expect(vi.mocked(playTone).mock.calls.map(([options]) => options)).toEqual([
+        { frequency: 1000, level: 40, duration: 1500, channel: 'right' },
+        { frequency: 1000, level: 30, duration: 1500, channel: 'right' },
+      ]);
+    });
+
+    it('ignores responses once the test is complete', async () => {
+      const test = new HearingTest({ frequencies: [1000] });
+      await test.start();
+      await findThreshold(test);
+      await findThreshold(test);
+      const toneCount = vi.mocked(playTone).mock.calls.length;
+
+      await test.respondHeard();
+      await test.respondNotHeard();
+
+      expect(test.getState().phase).toBe('complete');
+      expect(vi.mocked(playTone).mock.calls.length).toBe(toneCount);
+    });
+
+    it('counts a response window that times out as not heard', async () => {
+      const test = new HearingTest({ frequencies: [1000], responseDuration: 3000 });
+      await test.start();
+
+      await vi.advanceTimersByTimeAsync(2999);
+      expect(test.getState().currentLevel).toBe(40);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(test.getState().currentLevel).toBe(45);
+
+      // The timeout starts the ascent, so two hits at 45 record the threshold
+      await test.respondHeard();
+      await test.respondHeard();
+      expect(test.getState().responses.get('right-1000')).toBe(45);
+    });
+
+    it('cancels the response window when the listener answers', async () => {
+      const test = new HearingTest({ frequencies: [1000], responseDuration: 3000 });
+      await test.start();
+      await vi.advanceTimersByTimeAsync(2000);
+
+      await test.respondHeard(); // 40 -> 30, new 3000 ms window
+      await vi.advanceTimersByTimeAsync(2000);
+
+      // The first window would have fired by now had it not been cleared
+      expect(test.getState().currentLevel).toBe(30);
+      expect(vi.getTimerCount()).toBe(1);
     });
   });
 });
