@@ -148,41 +148,45 @@ function renderIntro(app: HTMLElement): void {
 }
 
 function renderTesting(app: HTMLElement): void {
-  const progress = calculateProgress();
+  // Render the shell once per run; later state changes update it in place so focus survives
+  if (!app.querySelector('[data-screen="speech-noise-test"]')) {
+    renderTestingShell(app);
+  }
+  updateTesting();
+}
+
+function renderTestingShell(app: HTMLElement): void {
   const words = WORD_LISTS[state.wordListType];
-  
+
   app.innerHTML = `
-    <main id="main-content" class="screen" tabindex="-1" aria-label="Speech in Noise Test - Testing">
-      ${renderHeader('🗣️', 'Listen Carefully', `SNR: ${state.currentSNR > 0 ? '+' : ''}${state.currentSNR} dB`)}
-      
+    <main id="main-content" class="screen" tabindex="-1" aria-label="Speech in Noise Test - Testing" data-screen="speech-noise-test">
+      ${renderHeader('🗣️', 'Listen Carefully', '')}
+
       <section class="card card--glow">
-        <div class="progress" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
-          <div class="progress__bar" style="width: ${progress}%;"></div>
+        <div class="progress" id="speech-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-label="Test progress">
+          <div class="progress__bar" id="speech-progress-bar"></div>
         </div>
-        <p class="progress__text">${Math.round(progress)}% complete</p>
-        
+        <p class="progress__text" id="speech-progress-text"></p>
+
         <div class="speech-test-display">
-          ${state.waitingForResponse ? `
-            <p class="speech-question">What word did you hear?</p>
-            <div class="speech-options" role="group" aria-label="Word options">
-              ${words.map(word => `
-                <button class="btn btn--secondary speech-option" data-word="${word}">
-                  ${word}
-                </button>
-              `).join('')}
-            </div>
-            <button class="btn btn--secondary mt-md w-full" id="replay-word">
-              <span aria-hidden="true">🔁</span> Replay Word
-            </button>
-          ` : `
-            <div class="speech-listening">
-              <div class="speech-listening__icon">👂</div>
-              <p>Playing word...</p>
-            </div>
-          `}
+          <div class="speech-listening" id="speech-listening">
+            <div class="speech-listening__icon" aria-hidden="true">👂</div>
+            <p>Playing word...</p>
+          </div>
+          <p class="speech-question" id="speech-question">What word did you hear?</p>
+          <div class="speech-options" role="group" aria-label="Word options">
+            ${words.map(word => `
+              <button class="btn btn--secondary speech-option" data-word="${word}">
+                ${word}
+              </button>
+            `).join('')}
+          </div>
+          <button class="btn btn--secondary mt-md w-full" id="replay-word">
+            <span aria-hidden="true">🔁</span> Replay Word
+          </button>
         </div>
       </section>
-      
+
       <nav class="nav-buttons">
         <button class="btn btn--secondary" id="cancel-test">
           <span aria-hidden="true">✕</span> Cancel Test
@@ -190,30 +194,49 @@ function renderTesting(app: HTMLElement): void {
       </nav>
     </main>
   `;
-  
-  if (state.waitingForResponse) {
-    // Bind word selection handlers
-    document.querySelectorAll('.speech-option').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const selectedWord = btn.getAttribute('data-word') || '';
-        handleResponse(selectedWord);
-      });
+
+  // Clicks while the next word plays are ignored rather than scored
+  document.querySelectorAll('.speech-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.waitingForResponse) handleResponse(btn.getAttribute('data-word') || '');
     });
-    
-    onClick('replay-word', () => {
-      speakWord(state.currentWord);
-    });
-  }
-  
+  });
+  onClick('replay-word', () => {
+    if (state.waitingForResponse) speakWord(state.currentWord);
+  });
   onClick('cancel-test', () => navigateTo('home'));
-  
-  if (state.waitingForResponse) {
-    // Put keyboard users straight onto the word choices rather than the page top
-    document.querySelector<HTMLElement>('.speech-option')?.focus();
+}
+
+function updateTesting(): void {
+  const progress = calculateProgress();
+  document.getElementById('speech-progress')?.setAttribute('aria-valuenow', String(progress));
+  const bar = document.getElementById('speech-progress-bar');
+  if (bar) bar.style.width = `${progress}%`;
+  setText('#speech-progress-text', `${Math.round(progress)}% complete`);
+  setText('.header__subtitle', `SNR: ${state.currentSNR > 0 ? '+' : ''}${state.currentSNR} dB`);
+
+  const waiting = state.waitingForResponse;
+  const listening = document.getElementById('speech-listening');
+  if (listening) listening.hidden = waiting;
+  const question = document.getElementById('speech-question');
+  if (question) question.hidden = !waiting;
+  // aria-disabled (not disabled) keeps a focused option focused while the next word plays
+  document.querySelectorAll('.speech-option, #replay-word').forEach(btn => {
+    btn.setAttribute('aria-disabled', String(!waiting));
+  });
+
+  if (waiting) {
+    // Put keyboard users on the word choices unless they are already there
+    if (!document.activeElement?.classList.contains('speech-option')) {
+      document.querySelector<HTMLElement>('.speech-option')?.focus();
+    }
     announce('What word did you hear? Choose from the options.');
-  } else {
-    focusMain();
   }
+}
+
+function setText(selector: string, text: string): void {
+  const el = document.querySelector(selector);
+  if (el) el.textContent = text;
 }
 
 function renderResults(app: HTMLElement): void {

@@ -8,12 +8,17 @@ function stubCanvas() {
 describe('home screen history', () => {
   beforeEach(() => {
     vi.resetModules();
+    // renderHome() schedules focusMain() and announce() timers; keep them from
+    // firing after the jsdom environment is torn down.
+    vi.useFakeTimers();
     stubCanvas();
     localStorage.clear();
     document.body.innerHTML = '<div id="app"></div>';
   });
 
   afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
     localStorage.clear();
   });

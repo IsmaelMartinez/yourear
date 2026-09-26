@@ -75,7 +75,7 @@ describe('speech-noise screen lifecycle', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.useFakeTimers();
-    document.body.innerHTML = '<div id="app"></div>';
+    document.body.innerHTML = '<div id="app"></div><div id="announcer" aria-live="polite"></div>';
   });
 
   afterEach(() => {
@@ -102,6 +102,39 @@ describe('speech-noise screen lifecycle', () => {
     await vi.advanceTimersByTimeAsync(400);
 
     expect(document.activeElement?.classList.contains('speech-option')).toBe(true);
+  });
+
+  it('keeps the word options and focus in place between trials', async () => {
+    const mocks = installMocks();
+    await loadScreen();
+
+    click('start-test');
+    await vi.advanceTimersByTimeAsync(600);
+    mocks.words()[0].onended?.();
+    await vi.advanceTimersByTimeAsync(400);
+
+    const options = [...document.querySelectorAll<HTMLElement>('.speech-option')];
+    options[1].focus();
+    options[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    // Listening phase for the next word: nothing may pull focus to the page top
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect([...document.querySelectorAll('.speech-option')]).toEqual(options);
+    expect(document.activeElement).toBe(options[1]);
+    expect(options[1].getAttribute('aria-disabled')).toBe('true');
+    expect(document.querySelectorAll('[aria-live], [role="alert"], [role="status"]')).toHaveLength(1);
+
+    // A click while the next word plays is ignored rather than scored
+    options[0].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(mocks.sources.filter(s => !s.loop)).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(400);
+    mocks.sources.filter(s => !s.loop)[1].onended?.();
+    await vi.advanceTimersByTimeAsync(400);
+
+    expect(document.activeElement).toBe(options[1]);
+    expect(options[1].getAttribute('aria-disabled')).toBe('false');
+    expect(document.getElementById('announcer')!.textContent).toBe('What word did you hear? Choose from the options.');
   });
 
   it('cancelling mid-trial leaves Home rendered and stops the word and the noise', async () => {

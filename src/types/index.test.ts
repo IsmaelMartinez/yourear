@@ -195,6 +195,16 @@ describe('getExpectedThresholds', () => {
     ]);
   });
 
+  it('derives p10 from the returned median and p90 (half the upper spread, floored at -5 dB HL)', () => {
+    const t = getExpectedThresholds(43);
+    expect([250, 1000, 4000, 8000].map(f => t[f].p10)).toEqual([-5, -2, 4, 7]);
+    for (let age = 10; age <= 90; age++) {
+      for (const [frequency, { p10, median, p90 }] of Object.entries(getExpectedThresholds(age))) {
+        expect(p10, `${age} y, ${frequency} Hz`).toBe(Math.max(-5, median - Math.round((p90 - median) * 0.5)));
+      }
+    }
+  });
+
   it('treats every age up to 20 as the age-20 baseline', () => {
     const baseline = getExpectedThresholds(20);
     expect(getExpectedThresholds(10)).toEqual(baseline);
