@@ -33,8 +33,5 @@
   },
   "dependencies": {
     "jspdf": "^4.2.1"
-  },
-  "overrides": {
-    "serialize-javascript": "^7.0.5"
   }
 }
