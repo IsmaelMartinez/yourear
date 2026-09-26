@@ -16,6 +16,11 @@ export class AudioInitError extends Error {
   }
 }
 
+/** Convert decibels to a linear gain multiplier */
+export function dbToGain(db: number): number {
+  return Math.pow(10, db / 20);
+}
+
 export function getAudioContext(): AudioContext {
   if (!audioContext) {
     try {

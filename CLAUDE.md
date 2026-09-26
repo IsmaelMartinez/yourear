@@ -8,7 +8,7 @@ Use `npm run test:run` (single run) rather than `npm test`, which starts Vitest 
 
 ## Architecture
 
-- `src/main.ts` is the router: `render()` switches on `getState().screen` and calls each screen's cleanup (`cleanupTestScreen`, `cleanupTinnitusScreen`, `cleanupSpeechNoiseScreen`) when leaving it.
+- `src/main.ts` is the router: `render()` looks up `getState().screen` in the `SCREENS` table and calls every other screen's cleanup (calibration, test, tinnitus, speech-noise) before rendering it.
 - `src/screens/` has one file per route; each renders template-string HTML into the app container and wires its own handlers.
 - `src/audio/` holds tone, tinnitus, speech/noise and mic noise-meter code; every module shares the singleton `AudioContext` from `audio-context.ts` (`getAudioContext()`, `ensureRunning()`), never a new one.
 - `src/state/app-state.ts` owns app state and navigation; `src/services/` holds the test runner and jsPDF export; `src/storage/profile.ts` persists profiles in localStorage under `yourear_profiles`.

@@ -2,11 +2,11 @@
  * Home screen - Landing page with test options and history
  */
 
-import { getAppContainer, onClick, announce, focusMain, escapeHtml } from '../utils/dom';
+import { getAppContainer, onClick, announce, focusMain, escapeHtml, renderHeader, renderFooter } from '../utils/dom';
 import { getAllProfiles } from '../storage/profile';
 import { Audiogram } from '../ui/audiogram';
 import { navigateTo } from '../state/app-state';
-import { HearingProfile } from '../types';
+import { HearingProfile, TEST_MODES, TestMode } from '../types';
 
 export function renderHome(): void {
   const app = getAppContainer();
@@ -15,11 +15,7 @@ export function renderHome(): void {
   
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="YourEar Home">
-      <header class="header" role="banner">
-        <div class="header__logo" aria-hidden="true">👂</div>
-        <h1 class="header__title">YourEar</h1>
-        <p class="header__subtitle">Discover your hearing capabilities</p>
-      </header>
+      ${renderHeader('👂', 'YourEar', 'Discover your hearing capabilities')}
       
       <section class="card card--glow" aria-labelledby="assessment-title">
         <h2 class="card__title" id="assessment-title"><span aria-hidden="true">🎧</span> Hearing Assessment</h2>
@@ -36,19 +32,10 @@ export function renderHome(): void {
         </div>
         
         <div class="flex-buttons" role="group" aria-label="Test options">
-          <button class="btn btn--primary btn--large" id="start-full-test" aria-describedby="full-test-desc">
-            <span aria-hidden="true">🎵</span> Full Test
-            <span id="full-test-desc" class="btn__sublabel">6 frequencies · ~8 min</span>
-          </button>
-          <button class="btn btn--secondary btn--large" id="start-quick-test" aria-describedby="quick-test-desc">
-            <span aria-hidden="true">⚡</span> Quick Test
-            <span id="quick-test-desc" class="btn__sublabel">3 frequencies · ~2 min</span>
-          </button>
+          ${renderModeButton('full', 'btn--primary btn--large')}
+          ${renderModeButton('quick', 'btn--secondary btn--large')}
         </div>
-        <button class="btn btn--secondary mt-md w-full" id="start-detailed-test" aria-describedby="detailed-test-desc">
-          <span aria-hidden="true">🔬</span> Detailed Test
-          <span id="detailed-test-desc" class="btn__sublabel">11 frequencies incl. inter-octave · ~15 min</span>
-        </button>
+        ${renderModeButton('detailed', 'btn--secondary mt-md w-full')}
         
         <div class="disclaimer" role="alert">
           <span aria-hidden="true">⚠️</span> <strong>Medical Disclaimer:</strong> This is a self-assessment tool for curiosity and general awareness only. 
@@ -67,9 +54,9 @@ export function renderHome(): void {
   announce('Home screen loaded. Start a hearing test or view your previous results.');
   
   // Event bindings
-  onClick('start-full-test', () => navigateTo('calibration', { mode: 'full' }));
-  onClick('start-quick-test', () => navigateTo('calibration', { mode: 'quick' }));
-  onClick('start-detailed-test', () => navigateTo('calibration', { mode: 'detailed' }));
+  for (const mode of Object.keys(TEST_MODES) as TestMode[]) {
+    onClick(`start-${mode}-test`, () => navigateTo('calibration', { mode }));
+  }
   onClick('view-latest', () => { if (latest) navigateTo('results', { profile: latest }); });
   onClick('compare-tests', () => navigateTo('comparison'));
   onClick('tinnitus-matcher', () => navigateTo('tinnitus'));
@@ -85,6 +72,16 @@ export function renderHome(): void {
   bindProfileClickHandlers(profiles);
   
   focusMain();
+}
+
+function renderModeButton(mode: TestMode, classes: string): string {
+  const { icon, label, config, minutes, note } = TEST_MODES[mode];
+  return `
+    <button class="btn ${classes}" id="start-${mode}-test" aria-describedby="${mode}-test-desc">
+      <span aria-hidden="true">${icon}</span> ${label}
+      <span id="${mode}-test-desc" class="btn__sublabel">${config.frequencies.length} frequencies${note ? ` ${note}` : ''} · ~${minutes} min</span>
+    </button>
+  `;
 }
 
 function renderLatestResult(latest: HearingProfile): string {
@@ -154,14 +151,6 @@ function renderAboutSection(): string {
         used by elephants. That would require specialized microphones and speakers!
       </p>
     </section>
-  `;
-}
-
-function renderFooter(): string {
-  return `
-    <footer class="footer" role="contentinfo">
-      <p>Open source project · <a href="https://github.com/IsmaelMartinez/yourear" target="_blank" rel="noopener noreferrer">GitHub <span class="sr-only">(opens in new tab)</span></a></p>
-    </footer>
   `;
 }
 

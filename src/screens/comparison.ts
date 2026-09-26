@@ -2,7 +2,7 @@
  * Comparison screen - Compare multiple hearing test results over time
  */
 
-import { getAppContainer, onClick, announce, focusMain, escapeHtml } from '../utils/dom';
+import { getAppContainer, onClick, announce, focusMain, escapeHtml, renderHeader } from '../utils/dom';
 import { getAllProfiles } from '../storage/profile';
 import { ComparisonAudiogram, calculatePTAChange, PROFILE_LINE_STYLES } from '../ui/comparison-audiogram';
 import { renderThresholdTable } from '../ui/threshold-table';
@@ -23,11 +23,7 @@ export function renderComparison(focusProfileId?: string): void {
     // Not enough profiles to compare
     app.innerHTML = `
       <main id="main-content" class="screen" tabindex="-1" aria-label="Profile Comparison">
-        <header class="header" role="banner">
-          <div class="header__logo" aria-hidden="true">📈</div>
-          <h1 class="header__title">Compare Results</h1>
-          <p class="header__subtitle">Track your hearing over time</p>
-        </header>
+        ${renderHeader('📈', 'Compare Results', 'Track your hearing over time')}
         
         <section class="card">
           <h2 class="card__title"><span aria-hidden="true">ℹ️</span> Not Enough Data</h2>
@@ -54,15 +50,11 @@ export function renderComparison(focusProfileId?: string): void {
   
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Profile Comparison">
-      <header class="header" role="banner">
-        <div class="header__logo" aria-hidden="true">📈</div>
-        <h1 class="header__title">Compare Results</h1>
-        <p class="header__subtitle">Track your hearing over time</p>
-      </header>
+      ${renderHeader('📈', 'Compare Results', 'Track your hearing over time')}
       
       <section class="card">
         <h2 class="card__title"><span aria-hidden="true">📋</span> Select Tests to Compare</h2>
-        <p class="text-muted-sm" style="margin-bottom: var(--spacing-md);">Select 2-5 tests to overlay on the audiogram</p>
+        <p class="text-muted-sm mb-md">Select 2-5 tests to overlay on the audiogram</p>
         <div class="profiles__list" role="group" aria-label="Available tests">
           ${profiles.map(p => `
             <label class="profile-checkbox" data-id="${escapeHtml(p.id)}">
@@ -92,7 +84,7 @@ export function renderComparison(focusProfileId?: string): void {
       </section>
       
       <nav class="nav-buttons" aria-label="Navigation">
-        <button class="btn btn--secondary" id="back-home" style="flex: 1;">
+        <button class="btn btn--secondary flex-1" id="back-home">
           <span aria-hidden="true">←</span> Home
         </button>
       </nav>
@@ -184,22 +176,22 @@ function renderChangesSummary(profiles: HearingProfile[]): string {
     : 'Avg = Average of tested frequencies (Quick Test uses 1000, 4000, 8000 Hz). For accurate PTA, use Full or Detailed Test.';
   
   return `
-    <div class="comparison-summary" style="margin-top: var(--spacing-lg); padding: var(--spacing-lg); background: var(--bg-tertiary); border-radius: var(--radius-md);">
-      <h3 style="font-size: 1rem; margin-bottom: var(--spacing-md);"><span aria-hidden="true">📊</span> Change Over ${daysBetween} Days</h3>
-      <p style="color: var(--text-secondary);">
+    <div class="comparison-summary">
+      <h3 class="subheading"><span aria-hidden="true">📊</span> Change Over ${daysBetween} Days</h3>
+      <p class="text-secondary">
         Comparing ${oldest.createdAt.toLocaleDateString()} to ${newest.createdAt.toLocaleDateString()}
       </p>
-      <div style="margin-top: var(--spacing-md); display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-md);">
+      <div class="grid-2 mt-md">
         <div>
           <strong>Right Ear ${label}:</strong><br>
-          ${formatChange(change.right)} <span style="color: var(--text-muted); font-size: 0.85rem;">${getInterpretation(change.right)}</span>
+          ${formatChange(change.right)} <span class="comparison-summary__note">${getInterpretation(change.right)}</span>
         </div>
         <div>
           <strong>Left Ear ${label}:</strong><br>
-          ${formatChange(change.left)} <span style="color: var(--text-muted); font-size: 0.85rem;">${getInterpretation(change.left)}</span>
+          ${formatChange(change.left)} <span class="comparison-summary__note">${getInterpretation(change.left)}</span>
         </div>
       </div>
-      <p class="text-muted-sm" style="margin-top: var(--spacing-md); font-size: 0.8rem;">
+      <p class="text-muted-sm comparison-summary__footnote">
         ${footnote}
       </p>
     </div>

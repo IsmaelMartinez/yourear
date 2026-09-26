@@ -5,7 +5,7 @@
  * using adjustable sliders and a continuous tone.
  */
 
-import { getAppContainer, onClick, announce, focusMain } from '../utils/dom';
+import { getAppContainer, onClick, announce, focusMain, renderHeader } from '../utils/dom';
 import { navigateTo } from '../state/app-state';
 import { formatFrequency } from '../types';
 import {
@@ -27,11 +27,7 @@ export function renderTinnitus(): void {
   
   app.innerHTML = `
     <main id="main-content" class="screen" tabindex="-1" aria-label="Tinnitus Frequency Matcher">
-      <header class="header" role="banner">
-        <div class="header__logo" aria-hidden="true">🔔</div>
-        <h1 class="header__title">Tinnitus Matcher</h1>
-        <p class="header__subtitle">Find the frequency and loudness of your tinnitus</p>
-      </header>
+      ${renderHeader('🔔', 'Tinnitus Matcher', 'Find the frequency and loudness of your tinnitus')}
       
       <section class="card card--glow">
         <h2 class="card__title"><span aria-hidden="true">🎵</span> Match Your Tinnitus</h2>
@@ -85,10 +81,10 @@ export function renderTinnitus(): void {
         </div>
         
         <div class="tinnitus-play-controls">
-          <button class="btn ${settings.isPlaying ? 'btn--heard' : 'btn--primary'} btn--large" id="toggle-tone" style="min-width: 200px;">${toggleButtonContent(settings.isPlaying)}</button>
+          <button class="btn ${settings.isPlaying ? 'btn--heard' : 'btn--primary'} btn--large" id="toggle-tone">${toggleButtonContent(settings.isPlaying)}</button>
         </div>
         
-        <p class="text-muted-sm text-center" style="margin-top: var(--spacing-lg);">
+        <p class="text-muted-sm text-center mt-lg">
           Adjust the sliders while the tone plays until it matches your tinnitus.<br>
           Use headphones for best results.
         </p>
@@ -100,13 +96,13 @@ export function renderTinnitus(): void {
         <h2 class="card__title"><span aria-hidden="true">ℹ️</span> About Tinnitus Matching</h2>
         <div class="text-secondary-lg">
           <p><strong>What is this for?</strong> Identifying your tinnitus frequency can help with:</p>
-          <ul style="margin: var(--spacing-md) 0; padding-left: var(--spacing-xl);">
+          <ul class="bullet-list">
             <li>Communicating with your doctor</li>
             <li>Finding effective masking sounds</li>
             <li>Tracking changes over time</li>
           </ul>
           <p class="mt-md"><strong>Tips:</strong></p>
-          <ul style="margin: var(--spacing-md) 0; padding-left: var(--spacing-xl);">
+          <ul class="bullet-list">
             <li>Start with frequency - find the pitch first</li>
             <li>Then adjust loudness until volumes match</li>
             <li>Use fine-tuning mode for precision</li>
@@ -156,17 +152,17 @@ function renderResultsSection(settings: TinnitusSettings): string {
   return `
     <section class="card">
       <h2 class="card__title"><span aria-hidden="true">📊</span> Your Match</h2>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); text-align: center;">
+      <div class="grid-2 tinnitus-match text-center">
         <div>
-          <div id="match-frequency" style="font-size: 2rem; font-family: var(--font-mono); color: var(--accent-primary);">${formatFrequency(settings.frequency, 'short')}</div>
-          <div style="color: var(--text-muted); font-size: 0.9rem;">Frequency</div>
+          <div id="match-frequency" class="tinnitus-match__value text-accent">${formatFrequency(settings.frequency, 'short')}</div>
+          <div class="tinnitus-match__label">Frequency</div>
         </div>
         <div>
-          <div id="match-volume" style="font-size: 2rem; font-family: var(--font-mono); color: var(--accent-left);">${settings.volume} dB</div>
-          <div style="color: var(--text-muted); font-size: 0.9rem;">Loudness</div>
+          <div id="match-volume" class="tinnitus-match__value text-left-ear">${settings.volume} dB</div>
+          <div class="tinnitus-match__label">Loudness</div>
         </div>
       </div>
-      <p id="match-description" class="text-muted-sm text-center" style="margin-top: var(--spacing-md);">${describeFrequency(settings.frequency)}</p>
+      <p id="match-description" class="text-muted-sm text-center">${describeFrequency(settings.frequency)}</p>
     </section>
   `;
 }

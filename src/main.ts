@@ -5,7 +5,7 @@
  */
 
 import './styles.css';
-import { getState, setRenderCallback } from './state/app-state';
+import { getState, setRenderCallback, type Screen } from './state/app-state';
 import { renderHome } from './screens/home';
 import { renderCalibration, cleanupCalibrationScreen } from './screens/calibration';
 import { renderTest, cleanupTestScreen } from './screens/test';
@@ -19,48 +19,25 @@ import { createProfile, getAllProfiles } from './storage/profile';
 // Screen Router
 // ============================================
 
+const SCREENS: Record<Screen, { render: () => void; cleanup?: () => void }> = {
+  home: { render: renderHome },
+  calibration: { render: renderCalibration, cleanup: cleanupCalibrationScreen },
+  test: { render: renderTest, cleanup: cleanupTestScreen },
+  results: { render: renderResults },
+  comparison: { render: renderComparison },
+  tinnitus: { render: renderTinnitus, cleanup: cleanupTinnitusScreen },
+  'speech-noise': { render: renderSpeechNoise, cleanup: cleanupSpeechNoiseScreen },
+};
+
 /**
- * Main render function - routes to appropriate screen
+ * Main render function - cleans up every other screen, then renders the current one
  */
 function render(): void {
-  // Clean up screen-specific handlers when leaving
   const { screen } = getState();
-  if (screen !== 'calibration') {
-    cleanupCalibrationScreen();
+  for (const [name, { cleanup }] of Object.entries(SCREENS)) {
+    if (name !== screen) cleanup?.();
   }
-  if (screen !== 'test') {
-    cleanupTestScreen();
-  }
-  if (screen !== 'tinnitus') {
-    cleanupTinnitusScreen();
-  }
-  if (screen !== 'speech-noise') {
-    cleanupSpeechNoiseScreen();
-  }
-  
-  switch (screen) {
-    case 'home': 
-      renderHome(); 
-      break;
-    case 'calibration': 
-      renderCalibration(); 
-      break;
-    case 'test': 
-      renderTest(); 
-      break;
-    case 'results': 
-      renderResults(); 
-      break;
-    case 'comparison':
-      renderComparison();
-      break;
-    case 'tinnitus':
-      renderTinnitus();
-      break;
-    case 'speech-noise':
-      renderSpeechNoise();
-      break;
-  }
+  SCREENS[screen].render();
 }
 
 // ============================================
