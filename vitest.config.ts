@@ -10,6 +10,7 @@ export default defineConfig({
     },
     globals: true,
     include: ['src/**/*.test.ts'],
+    // Undo every vi.stubGlobal (see src/test/web-audio.ts) after each test
+    unstubGlobals: true,
   },
 });
-
