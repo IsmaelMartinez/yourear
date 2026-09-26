@@ -1,6 +1,7 @@
 {
   "name": "yourear",
-  "version": "0.1.0",
+  "version": "1.0.2",
+  "private": true,
   "description": "A browser-based hearing assessment tool using the Web Audio API",
   "type": "module",
   "scripts": {
@@ -9,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "hearing",

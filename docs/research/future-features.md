@@ -10,7 +10,7 @@
 | **Extended Frequencies** | Detailed test with 11 frequencies including inter-octave |
 | **Speech-in-Noise Test** | Measure hearing in noise using Web Speech API + pink noise |
 | **Tinnitus Matcher** | Identify tinnitus frequency (100Hz-12kHz) and loudness |
-| **TypeScript 6** | Major toolchain upgrade (final JS-based compiler release) |
+| **Toolchain upgrades** | TypeScript 7 and Vite 8 (vite-plugin-pwa 1.3 supports Vite 8) |
 | **Environmental Noise Check** | Optional mic-based ambient noise meter on the calibration screen |
 
 ---
@@ -18,7 +18,7 @@
 ## 🗺️ Visual Roadmap
 
 ```
-                         YOUREAR ROADMAP — April 2026
+                              YOUREAR ROADMAP
  ═══════════════════════════════════════════════════════════════════════
 
  PHASE 0 — FOUNDATIONS (Done)                                    ✅
@@ -28,13 +28,11 @@
  ├── Tinnitus frequency matcher
  ├── Speech-in-noise test
  ├── PWA offline support
- └── TypeScript 6
+ └── TypeScript 7 + Vite 8
 
  ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─
 
  PHASE 1 — ACCURACY & TRUST          ~6-8 hrs         🎯 In progress
- │
- │  ⏳ Vite 8 upgrade blocked on vite-plugin-pwa peer dep support
  │
  ├─► Environmental Noise Check                         ✅ Done
  │   Mic-based ambient noise meter on the calibration
@@ -148,4 +146,3 @@ Simulate how different hearing aid settings would sound.
 
 - **[Hardware Limitations](./hardware-limitations.md)** - Physical constraints of consumer audio
 - **[Clinical Accuracy](./clinical-accuracy.md)** - Comparison with professional audiometry
-- **[Code Improvements](./code-improvements.md)** - Completed refactoring summary
