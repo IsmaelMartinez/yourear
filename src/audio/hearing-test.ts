@@ -24,6 +24,8 @@ export class HearingTest {
   private hearCountAtLevel = 0;
   private waitingForResponse = false;
   private responseTimeout: ReturnType<typeof setTimeout> | null = null;
+  /** Bumped on start/stop so a tone that ends after stop() cannot schedule a response */
+  private session = 0;
 
   constructor(config: Partial<TestConfig> = {}) {
     this.config = { ...DEFAULT_TEST_CONFIG, ...config };
@@ -55,6 +57,8 @@ export class HearingTest {
   }
 
   async start(): Promise<void> {
+    this.session++;
+    this.clearTimeout();
     this.state = this.createInitialState();
     this.state.phase = 'testing';
     this.resetTracking();
@@ -63,6 +67,7 @@ export class HearingTest {
   }
 
   stop(): void {
+    this.session++;
     stopTone();
     this.clearTimeout();
     this.waitingForResponse = false;
@@ -134,6 +139,7 @@ export class HearingTest {
   }
 
   private async presentTone(): Promise<void> {
+    const session = this.session;
     this.state.isPlaying = true;
     this.emit('stateChange');
 
@@ -143,6 +149,8 @@ export class HearingTest {
       duration: this.config.toneDuration,
       channel: this.state.currentEar,
     });
+
+    if (session !== this.session) return;
 
     this.state.isPlaying = false;
     this.emit('stateChange');
