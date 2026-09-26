@@ -7,7 +7,6 @@ import { getLatestProfile } from '../storage/profile';
 import { Audiogram, generateSummary } from '../ui/audiogram';
 import { getState, navigateTo } from '../state/app-state';
 import { HearingProfile, formatFrequency } from '../types';
-import { exportToPDF } from '../services/pdf-export';
 
 // Store audiogram instance for PDF export
 let currentAudiogram: Audiogram | null = null;
@@ -127,6 +126,7 @@ async function handleExportPDF(profile: HearingProfile): Promise<void> {
   
   try {
     const audiogramDataUrl = currentAudiogram.toDataURL();
+    const { exportToPDF } = await import('../services/pdf-export');
     await exportToPDF(profile, audiogramDataUrl);
     announce('PDF exported successfully. Check your downloads folder.');
   } catch (error) {
