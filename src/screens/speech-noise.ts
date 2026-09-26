@@ -11,6 +11,7 @@ import {
   stopNoise,
   setNoiseLevel,
   speakWord,
+  stopSpeech,
   getRandomWord,
   WORD_LISTS,
   SNR_LEVELS,
@@ -18,7 +19,7 @@ import {
   SNRResults,
   advanceTrial,
   createEmptyResults,
-  noiseLevelDbForSNR,
+  noiseLevelDbfsForSNR,
   calculateSNR50,
   interpretSNR50,
   WordListType,
@@ -128,7 +129,7 @@ function renderIntro(app: HTMLElement): void {
     state.currentTrial = 0;
     state.results = createEmptyResults();
     state.usedWords = [];
-    startNoise(noiseLevelDbForSNR(state.currentSNR));
+    startNoise(noiseLevelDbfsForSNR(state.currentSNR));
     playNextWord();
   });
   
@@ -284,9 +285,6 @@ function renderResults(app: HTMLElement): void {
           <span aria-hidden="true">⚠️</span> This is a screening tool only. 
           Results can vary based on audio quality and environment.
         </div>
-        <p class="text-muted-sm">
-          The SNR is approximate: words are spoken by your device's speech synthesiser at its own volume, not mixed with the noise.
-        </p>
       </section>
       
       <nav class="nav-buttons">
@@ -344,8 +342,7 @@ async function playNextWord(): Promise<void> {
   try {
     await speakWord(state.currentWord);
   } catch (e) {
-    if (token !== runToken) return; // cancelled speech rejects; not an error
-    console.error('Speech synthesis failed:', e);
+    console.error('Word playback failed:', e);
   }
   if (token !== runToken) return;
   
@@ -372,7 +369,7 @@ function handleResponse(selectedWord: string): void {
     return;
   }
   if (state.currentSNR !== previousSNR) {
-    setNoiseLevel(noiseLevelDbForSNR(state.currentSNR));
+    setNoiseLevel(noiseLevelDbfsForSNR(state.currentSNR));
   }
   playNextWord();
 }
@@ -382,9 +379,7 @@ function handleResponse(selectedWord: string): void {
  */
 export function cleanupSpeechNoiseScreen(): void {
   runToken++;
-  if ('speechSynthesis' in window) {
-    speechSynthesis.cancel();
-  }
+  stopSpeech();
   stopNoise();
   state = createInitialState();
 }

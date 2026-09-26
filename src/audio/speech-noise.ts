@@ -1,18 +1,34 @@
 /**
  * Speech-in-Noise Test Audio
  *
- * Generates background noise and uses Web Speech API for speech synthesis.
- * Tests ability to understand speech at various signal-to-noise ratios (SNR).
+ * Plays pre-generated word clips (public/speech, see ADR 008) and pink noise
+ * through the shared AudioContext, so both levels are known and the SNR is
+ * the difference of their RMS levels in dBFS.
  */
 
 import { dbToGain, ensureRunning } from './audio-context';
 
+/** RMS level every word is played at; the noise is set relative to it */
+export const SPEECH_LEVEL_DBFS = -25;
+
+interface MeasuredBuffer {
+  buffer: AudioBuffer;
+  rms: number;
+}
+
 let noiseNode: AudioBufferSourceNode | null = null;
 let noiseGain: GainNode | null = null;
+let noiseRms = 1;
 /** Incremented on every start/stop so a superseded startNoise() does nothing after its await */
 let noiseGeneration = 0;
 /** Pink-noise buffers keyed by sample rate; generating one costs ~15 ms on the main thread */
-const noiseBufferCache = new Map<number, AudioBuffer>();
+const noiseBufferCache = new Map<number, MeasuredBuffer>();
+
+let speechNode: AudioBufferSourceNode | null = null;
+/** Incremented on every speak/stop so a superseded speakWord() plays nothing after its await */
+let speechGeneration = 0;
+/** Decoded word clips keyed by word, so each is fetched and decoded once */
+const clipCache = new Map<string, Promise<MeasuredBuffer>>();
 
 const NOISE_DURATION_S = 10;
 const NOISE_RAMP_TIME_CONSTANT_S = 0.05;
@@ -50,48 +66,61 @@ function createPinkNoiseBuffer(ctx: AudioContext, duration: number): AudioBuffer
   return buffer;
 }
 
-function getPinkNoiseBuffer(ctx: AudioContext): AudioBuffer {
-  let buffer = noiseBufferCache.get(ctx.sampleRate);
-  if (!buffer) {
-    buffer = createPinkNoiseBuffer(ctx, NOISE_DURATION_S);
-    noiseBufferCache.set(ctx.sampleRate, buffer);
+/** RMS of all samples across all channels (linear, full scale = 1) */
+function measureRms(buffer: AudioBuffer): number {
+  let sum = 0;
+  for (let c = 0; c < buffer.numberOfChannels; c++) {
+    for (const sample of buffer.getChannelData(c)) sum += sample * sample;
   }
-  return buffer;
+  return Math.sqrt(sum / (buffer.numberOfChannels * buffer.length));
 }
 
-function noiseGainForLevel(levelDb: number): number {
-  return dbToGain(levelDb - 30); // Reference at -30dBFS
+function getPinkNoiseBuffer(ctx: AudioContext): MeasuredBuffer {
+  let noise = noiseBufferCache.get(ctx.sampleRate);
+  if (!noise) {
+    const buffer = createPinkNoiseBuffer(ctx, NOISE_DURATION_S);
+    noise = { buffer, rms: measureRms(buffer) };
+    noiseBufferCache.set(ctx.sampleRate, noise);
+  }
+  return noise;
+}
+
+/** Gain that plays a buffer of the given RMS at levelDbfs RMS */
+function gainForRms(levelDbfs: number, rms: number): number {
+  return dbToGain(levelDbfs) / rms;
 }
 
 /**
- * Start one looping background noise source, replacing any existing one.
- * Change its level afterwards with setNoiseLevel().
+ * Start one looping background noise source at levelDbfs RMS, replacing any
+ * existing one. Change its level afterwards with setNoiseLevel().
  */
-export async function startNoise(levelDb: number = 0): Promise<void> {
+export async function startNoise(levelDbfs: number): Promise<void> {
   stopNoise();
   const generation = noiseGeneration;
 
   const ctx = await ensureRunning();
   if (generation !== noiseGeneration) return; // superseded by another start or a stop
 
+  const noise = getPinkNoiseBuffer(ctx);
+  noiseRms = noise.rms;
   noiseNode = ctx.createBufferSource();
-  noiseNode.buffer = getPinkNoiseBuffer(ctx);
+  noiseNode.buffer = noise.buffer;
   noiseNode.loop = true;
 
   noiseGain = ctx.createGain();
-  noiseGain.gain.value = noiseGainForLevel(levelDb);
+  noiseGain.gain.value = gainForRms(levelDbfs, noiseRms);
 
   noiseNode.connect(noiseGain).connect(ctx.destination);
   noiseNode.start();
 }
 
 /**
- * Ramp the running noise to a new level without restarting the source
+ * Ramp the running noise to a new RMS level without restarting the source
  */
-export function setNoiseLevel(levelDb: number): void {
+export function setNoiseLevel(levelDbfs: number): void {
   if (!noiseGain) return;
   noiseGain.gain.setTargetAtTime(
-    noiseGainForLevel(levelDb),
+    gainForRms(levelDbfs, noiseRms),
     noiseGain.context.currentTime,
     NOISE_RAMP_TIME_CONSTANT_S
   );
@@ -125,37 +154,60 @@ export const WORD_LISTS = {
 
 export type WordListType = keyof typeof WORD_LISTS;
 
+function loadClip(ctx: AudioContext, word: string): Promise<MeasuredBuffer> {
+  let clip = clipCache.get(word);
+  if (!clip) {
+    clip = (async () => {
+      const response = await fetch(`${import.meta.env.BASE_URL}speech/${word}.mp3`);
+      if (!response.ok) throw new Error(`Could not load the clip for "${word}" (HTTP ${response.status})`);
+      const buffer = await ctx.decodeAudioData(await response.arrayBuffer());
+      return { buffer, rms: measureRms(buffer) };
+    })();
+    clipCache.set(word, clip);
+    clip.catch(() => clipCache.delete(word)); // let a later call retry
+  }
+  return clip;
+}
+
 /**
- * Speak a word using Web Speech API
- * Returns a promise that resolves when speech is complete
+ * Play a word's clip at SPEECH_LEVEL_DBFS RMS, stopping any word already playing.
+ * Resolves when the word ends or is stopped by stopSpeech().
  */
-export function speakWord(word: string, rate: number = 0.9): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (!('speechSynthesis' in window)) {
-      reject(new Error('Speech synthesis not supported'));
-      return;
-    }
-    
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.rate = rate;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    
-    // Try to use a good English voice
-    const voices = speechSynthesis.getVoices();
-    const englishVoice = voices.find(v => 
-      v.lang.startsWith('en') && (v.name.includes('Google') || v.name.includes('Daniel'))
-    ) || voices.find(v => v.lang.startsWith('en'));
-    
-    if (englishVoice) {
-      utterance.voice = englishVoice;
-    }
-    
-    utterance.onend = () => resolve();
-    utterance.onerror = (e) => reject(e);
-    
-    speechSynthesis.speak(utterance);
+export async function speakWord(word: string): Promise<void> {
+  stopSpeech();
+  const generation = speechGeneration;
+
+  const ctx = await ensureRunning();
+  const clip = await loadClip(ctx, word);
+  if (generation !== speechGeneration) return; // superseded by another word or a stop
+
+  const source = ctx.createBufferSource();
+  source.buffer = clip.buffer;
+  const gain = ctx.createGain();
+  gain.gain.value = gainForRms(SPEECH_LEVEL_DBFS, clip.rms);
+  source.connect(gain).connect(ctx.destination);
+  speechNode = source;
+
+  await new Promise<void>(resolve => {
+    source.onended = () => {
+      source.disconnect();
+      gain.disconnect();
+      if (speechNode === source) speechNode = null;
+      resolve();
+    };
+    source.start();
   });
+}
+
+/**
+ * Stop the word that is playing, if any, and cancel one that is still loading
+ */
+export function stopSpeech(): void {
+  speechGeneration++;
+  if (speechNode) {
+    try { speechNode.stop(); } catch { /* already stopped */ }
+    speechNode = null;
+  }
 }
 
 /**
@@ -179,12 +231,11 @@ export type SNRLevel = typeof SNR_LEVELS[number];
 export type SNRResults = Map<SNRLevel, { correct: number; total: number }>;
 
 /**
- * Noise level (dB relative to the reference) that gives the nominal SNR.
- * Speech is played by speechSynthesis at a fixed volume outside Web Audio,
- * so the SNR is set by moving the noise only (see ADR 008).
+ * Noise RMS level in dBFS for an SNR. Speech always plays at
+ * SPEECH_LEVEL_DBFS, so the SNR is set by moving the noise only (ADR 008).
  */
-export function noiseLevelDbForSNR(snr: SNRLevel): number {
-  return 0 - snr; // avoid -0 at 0 dB SNR
+export function noiseLevelDbfsForSNR(snr: SNRLevel): number {
+  return SPEECH_LEVEL_DBFS - snr;
 }
 
 export function createEmptyResults(): SNRResults {

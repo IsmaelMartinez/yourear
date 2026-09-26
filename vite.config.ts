@@ -46,7 +46,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,mp3}'],
         // jsPDF's optional html2canvas, DOMPurify and canvg (index.es) chunks are
         // only used by doc.html()/addSvgAsImage, which pdf-export never calls.
         globIgnores: ['**/html2canvas-*.js', '**/purify.es-*.js', '**/index.es-*.js'],
