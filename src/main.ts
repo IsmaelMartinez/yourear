@@ -8,7 +8,7 @@ import './styles.css';
 import { getState, setRenderCallback } from './state/app-state';
 import { setTestRenderCallback } from './services/test-runner';
 import { renderHome } from './screens/home';
-import { renderCalibration } from './screens/calibration';
+import { renderCalibration, cleanupCalibrationScreen } from './screens/calibration';
 import { renderTest, cleanupTestScreen } from './screens/test';
 import { renderResults } from './screens/results';
 import { renderComparison } from './screens/comparison';
@@ -26,6 +26,9 @@ import { createProfile, getAllProfiles } from './storage/profile';
 function render(): void {
   // Clean up screen-specific handlers when leaving
   const { screen } = getState();
+  if (screen !== 'calibration') {
+    cleanupCalibrationScreen();
+  }
   if (screen !== 'test') {
     cleanupTestScreen();
   }

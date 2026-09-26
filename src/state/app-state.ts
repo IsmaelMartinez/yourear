@@ -80,10 +80,11 @@ export function navigateTo(screen: Screen, options?: {
 }
 
 /**
- * Set user age
+ * Set user age without re-rendering, so the calibration screen keeps
+ * its input focus and any running noise check
  */
 export function setUserAge(age: number | undefined): void {
-  setState({ userAge: age });
+  state = { ...state, userAge: age };
 }
 
 /**

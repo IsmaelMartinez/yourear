@@ -18,7 +18,27 @@ const MODE_CONFIG = {
   detailed: { icon: '🔬', label: 'Detailed Test', subtitle: '11 frequencies · ~15 minutes' },
 } as const;
 
+// Module-level so the router can stop the meter when leaving the screen
+let noiseMeter: NoiseMeterHandle | null = null;
+// Bumped on cleanup so a meter that finishes starting afterwards is stopped
+let meterGeneration = 0;
+
+function stopNoiseMeter(): void {
+  noiseMeter?.stop();
+  noiseMeter = null;
+}
+
+/**
+ * Stop the noise meter when leaving the calibration screen
+ */
+export function cleanupCalibrationScreen(): void {
+  meterGeneration++;
+  stopNoiseMeter();
+}
+
 export function renderCalibration(): void {
+  cleanupCalibrationScreen();
+
   const app = getAppContainer();
   const { testMode, userAge } = getState();
   const modeConfig = MODE_CONFIG[testMode];
@@ -104,12 +124,6 @@ export function renderCalibration(): void {
   
   announce(`${modeConfig.label} setup. Enter your age and test your headphones before starting.`);
 
-  let noiseMeter: NoiseMeterHandle | null = null;
-  const stopNoiseMeter = () => {
-    noiseMeter?.stop();
-    noiseMeter = null;
-  };
-
   // Track age changes
   onChange('age-input', (value) => {
     const val = parseInt(value);
@@ -142,9 +156,10 @@ export function renderCalibration(): void {
 
     button.disabled = true;
     button.innerHTML = '<span aria-hidden="true">⏳</span> Requesting microphone…';
+    const generation = meterGeneration;
     try {
       let lastNoisy: boolean | null = null;
-      noiseMeter = await startNoiseMeter((sample) => {
+      const meter = await startNoiseMeter((sample) => {
         const dbStr = sample.db.toFixed(0);
         if (value.textContent !== dbStr) value.textContent = dbStr;
 
@@ -163,12 +178,18 @@ export function renderCalibration(): void {
           }
         }
       });
+      if (generation !== meterGeneration) {
+        // The screen was left while the microphone was being requested
+        meter.stop();
+        return;
+      }
+      noiseMeter = meter;
       status.hidden = false;
       button.innerHTML = '<span aria-hidden="true">⏹</span> Stop Noise Check';
       button.disabled = false;
       announce('Measuring ambient noise');
     } catch (error) {
-      noiseMeter = null;
+      if (generation !== meterGeneration) return;
       status.hidden = false;
       status.classList.add('noise-meter--warning');
       value.textContent = '--';
