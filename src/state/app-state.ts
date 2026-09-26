@@ -66,6 +66,13 @@ export function setState(updates: Partial<AppState>): void {
 }
 
 /**
+ * Re-render the current screen without changing state
+ */
+export function rerender(): void {
+  renderCallback?.();
+}
+
+/**
  * Navigate to a different screen
  */
 export function navigateTo(screen: Screen, options?: { 
@@ -80,17 +87,11 @@ export function navigateTo(screen: Screen, options?: {
 }
 
 /**
- * Set user age
+ * Set user age without re-rendering, so the calibration screen keeps
+ * its input focus and any running noise check
  */
 export function setUserAge(age: number | undefined): void {
-  setState({ userAge: age });
-}
-
-/**
- * Set the active hearing test instance
- */
-export function setHearingTest(test: HearingTest | null): void {
-  setState({ hearingTest: test });
+  state = { ...state, userAge: age };
 }
 
 /**

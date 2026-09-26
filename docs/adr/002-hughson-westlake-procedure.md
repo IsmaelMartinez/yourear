@@ -42,3 +42,9 @@ START at 40 dB
   ↓ COUNT ≥ 2 → THRESHOLD FOUND
 ```
 
+## Output Level Mapping
+Hearing level is converted to output gain with a fixed reference of 0 dB HL = -90 dBFS (issue #89). This puts `maxLevel` (90 dB HL) exactly at 0 dBFS and `minLevel` (-10 dB HL) at -100 dBFS, so gain strictly increases across the whole procedure range and ascending steps above 60 dB HL are audible. The previous -60 dBFS reference saturated at 60 dB HL, so moderately-severe and severe losses were recorded as 60 dB HL or as no response.
+
+Capping `maxLevel` at the saturation point and labelling results "≥ 60 dB HL" was considered and rejected: it would discard the upper 30 dB of the audiogram and still need result-format changes, whereas moving the reference keeps every level at the same offset from the 40 dB HL calibration tone the user sets their volume against.
+
+Per-frequency reference offsets (ISO 389 reference equivalent threshold levels) are out of scope. Consumer headphones are uncalibrated, so the same dBFS-per-dB-HL mapping is used at every frequency and results remain relative rather than absolute.

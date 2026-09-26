@@ -5,7 +5,7 @@
  * at specific frequencies for hearing threshold testing.
  */
 
-import { ensureRunning } from './audio-context';
+import { ensureRunning, getAudioContext } from './audio-context';
 
 // Re-export for consumers that imported AudioInitError from here
 export { AudioInitError } from './audio-context';
@@ -13,7 +13,8 @@ export { AudioInitError } from './audio-context';
 // Active tone tracking
 let activeOscillator: OscillatorNode | null = null;
 let activeGain: GainNode | null = null;
-let activePanner: StereoPannerNode | null = null;
+// Bumped by stopTone so a playTone still awaiting the AudioContext does not start
+let toneGeneration = 0;
 
 export interface ToneOptions {
   frequency: number;
@@ -32,26 +33,31 @@ function dbToGain(db: number): number {
 }
 
 /**
- * Reference level: 0 dB HL maps to -60 dB relative to full scale (dBFS).
- * 
- * This provides sufficient headroom:
- * - At 0 dB HL: output is very quiet (-60 dBFS)
- * - At 90 dB HL: output is moderate (-60 + 90 = -30 dBFS, clamped to 0)
- * 
+ * Reference level: 0 dB HL maps to -90 dB relative to full scale (dBFS).
+ *
+ * The full test range stays below clipping and every 5 dB step is distinct:
+ * - At -10 dB HL (minLevel): -100 dBFS
+ * - At 0 dB HL: -90 dBFS
+ * - At 90 dB HL (maxLevel): 0 dBFS, the loudest undistorted output
+ *
  * Note: This is an arbitrary reference since consumer hardware isn't calibrated.
- * Results are relative, not absolute SPL.
+ * Results are relative, not absolute SPL, and no per-frequency (ISO 389)
+ * offsets are applied. See ADR 002.
  */
-const REFERENCE_DB_FS = -60;
+const REFERENCE_DB_FS = -90;
 
-/** Minimum gain to prevent complete silence (for safety) */
-const MIN_GAIN_DB = -80;
+/** Floor below the quietest test level (-10 dB HL = -100 dBFS) */
+const MIN_GAIN_DB = -110;
 
 /** Maximum gain to prevent clipping */
 const MAX_GAIN_DB = 0;
 
+/** Fade-out applied by stopTone to avoid an audible click */
+const STOP_RAMP_SEC = 0.02;
+
 /**
  * Convert hearing level (dB HL) to Web Audio gain value
- * @param dbHL - Hearing level in decibels (0-90 typical range)
+ * @param dbHL - Hearing level in decibels (-10 to 90 test range)
  * @returns Linear gain value for GainNode
  */
 function hearingLevelToGain(dbHL: number): number {
@@ -59,28 +65,32 @@ function hearingLevelToGain(dbHL: number): number {
   return dbToGain(gainDb);
 }
 
-function cleanup(): void {
-  activeOscillator?.disconnect();
-  activeGain?.disconnect();
-  activePanner?.disconnect();
+export function stopTone(): void {
+  toneGeneration++;
+  if (!activeOscillator || !activeGain) return;
+
+  const now = getAudioContext().currentTime;
+  const gain = activeGain.gain;
+  gain.cancelScheduledValues(now);
+  gain.setValueAtTime(gain.value, now);
+  gain.linearRampToValueAtTime(0, now + STOP_RAMP_SEC);
+  try { activeOscillator.stop(now + STOP_RAMP_SEC); } catch { /* already stopped */ }
+
+  // The oscillator's own onended handler disconnects its nodes once the fade finishes
   activeOscillator = null;
   activeGain = null;
-  activePanner = null;
-}
-
-export function stopTone(): void {
-  if (activeOscillator) {
-    try { activeOscillator.stop(); } catch { /* already stopped */ }
-    cleanup();
-  }
 }
 
 export async function playTone(options: ToneOptions): Promise<void> {
   const { frequency, level, duration, channel } = options;
   
   stopTone();
-  
+  const generation = toneGeneration;
+
   const ctx = await ensureRunning();
+
+  // Stopped or superseded by another tone while the context was resuming
+  if (generation !== toneGeneration) return;
   
   const oscillator = ctx.createOscillator();
   oscillator.type = 'sine';
@@ -106,14 +116,20 @@ export async function playTone(options: ToneOptions): Promise<void> {
   
   activeOscillator = oscillator;
   activeGain = gainNode;
-  activePanner = panner;
   
   oscillator.start(now);
   oscillator.stop(now + durationSec + 0.1);
   
   return new Promise(resolve => {
     oscillator.onended = () => {
-      cleanup();
+      // Only tear down this tone's nodes; a newer tone may already be active
+      oscillator.disconnect();
+      gainNode.disconnect();
+      panner.disconnect();
+      if (activeOscillator === oscillator) {
+        activeOscillator = null;
+        activeGain = null;
+      }
       resolve();
     };
   });

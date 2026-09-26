@@ -5,6 +5,7 @@
 import { getAppContainer, onClick, announce } from '../utils/dom';
 import { getState, navigateTo } from '../state/app-state';
 import { formatFrequency } from '../types';
+import { stopTest } from '../services/test-runner';
 
 const MODE_ICONS = { quick: '⚡', full: '🎵', detailed: '🔬' } as const;
 const MODE_LABELS = { quick: 'Quick', full: 'Full', detailed: 'Detailed' } as const;
@@ -96,9 +97,8 @@ export function renderTest(): void {
     announce('Response recorded: not heard');
   });
   onClick('stop-test', () => { 
-    hearingTest?.stop(); 
+    stopTest(); 
     announce('Test stopped'); 
-    navigateTo('home'); 
   });
   
   // Keyboard shortcuts
