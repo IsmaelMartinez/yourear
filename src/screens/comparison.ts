@@ -2,7 +2,7 @@
  * Comparison screen - Compare multiple hearing test results over time
  */
 
-import { getAppContainer, onClick, announce, focusMain } from '../utils/dom';
+import { getAppContainer, onClick, announce, focusMain, escapeHtml } from '../utils/dom';
 import { getAllProfiles } from '../storage/profile';
 import { ComparisonAudiogram, calculatePTAChange } from '../ui/comparison-audiogram';
 import { navigateTo } from '../state/app-state';
@@ -64,13 +64,13 @@ export function renderComparison(): void {
         <p class="text-muted-sm" style="margin-bottom: var(--spacing-md);">Select 2-5 tests to overlay on the audiogram</p>
         <div class="profiles__list" role="group" aria-label="Available tests">
           ${profiles.map(p => `
-            <label class="profile-checkbox" data-id="${p.id}">
+            <label class="profile-checkbox" data-id="${escapeHtml(p.id)}">
               <input type="checkbox" 
                      ${selectedProfileIds.has(p.id) ? 'checked' : ''} 
                      ${!selectedProfileIds.has(p.id) && selectedProfileIds.size >= 5 ? 'disabled' : ''}
-                     aria-label="Select ${p.name || 'Hearing Test'} from ${p.createdAt.toLocaleDateString()}">
+                     aria-label="Select ${escapeHtml(p.name || 'Hearing Test')} from ${p.createdAt.toLocaleDateString()}">
               <span class="profile-checkbox__info">
-                <span class="profile-item__name">${p.name || 'Hearing Test'}${p.age ? ` (${p.age}y)` : ''}</span>
+                <span class="profile-item__name">${escapeHtml(p.name || 'Hearing Test')}${p.age ? ` (${p.age}y)` : ''}</span>
                 <span class="profile-item__date">${p.createdAt.toLocaleDateString()}</span>
               </span>
             </label>

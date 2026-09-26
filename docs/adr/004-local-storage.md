@@ -35,15 +35,28 @@ Use **LocalStorage** with JSON serialization.
 ## Implementation
 ```typescript
 const STORAGE_KEY = 'yourear_profiles';
+const BACKUP_KEY = 'yourear_profiles_backup';
 
 function createProfile(profile: Omit<HearingProfile, 'id'>): HearingProfile {
-  const profiles = getAllProfiles();
   const newProfile: HearingProfile = { ...profile, id: generateId() };
-  profiles.push(newProfile);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
+
+  try {
+    // Invalid entries are skipped one at a time; `unreadable` holds the raw value
+    // when it was unparseable, not an array, or had entries skipped
+    const { profiles, unreadable } = readProfiles();
+    if (unreadable !== null) localStorage.setItem(BACKUP_KEY, unreadable);
+    profiles.push(newProfile);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
+  } catch (error) {
+    // e.g. QuotaExceededError: log and still return the profile so results can be shown
+    console.error('[YourEar] Failed to save profile to localStorage:', error);
+  }
+
   return newProfile;
 }
 ```
+
+If the backup write fails, the main key is left untouched. Profile names and ids are passed through `escapeHtml` before being interpolated into `innerHTML`, because the `github.io` origin (and its localStorage) is shared with other Pages sites.
 
 ## Future Considerations
 - Add export/import JSON for backup
