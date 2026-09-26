@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { installAudioContext } from '../test/web-audio';
 
 interface MockUtterance {
   text: string;
@@ -8,16 +9,13 @@ interface MockUtterance {
 
 function installMocks() {
   const sources: { started: boolean; stopped: boolean }[] = [];
-  globalThis.AudioContext = class {
-    state = 'running' as AudioContextState;
-    sampleRate = 100;
-    currentTime = 0;
-    destination = {};
-    createBuffer = vi.fn((channels: number, length: number) => {
+  installAudioContext({
+    sampleRate: 100,
+    createBuffer: (channels: number, length: number) => {
       const data = Array.from({ length: channels }, () => new Float32Array(length));
       return { getChannelData: (c: number) => data[c] };
-    });
-    createBufferSource = vi.fn(() => {
+    },
+    createBufferSource: () => {
       const source = {
         loop: false,
         buffer: null,
@@ -30,28 +28,29 @@ function installMocks() {
       };
       sources.push(source);
       return source;
-    });
-    createGain = vi.fn(() => ({
-      gain: { value: 1, setTargetAtTime: vi.fn() },
-      connect: vi.fn((n) => n),
-      disconnect: vi.fn(),
-      context: this,
-    }));
-  } as unknown as typeof AudioContext;
+    },
+    createGain() {
+      return {
+        gain: { value: 1, setTargetAtTime: vi.fn() },
+        connect: vi.fn((n) => n),
+        disconnect: vi.fn(),
+        context: this,
+      };
+    },
+  });
 
   const utterances: MockUtterance[] = [];
-  globalThis.SpeechSynthesisUtterance = class {
+  vi.stubGlobal('SpeechSynthesisUtterance', class {
     onend: (() => void) | null = null;
     onerror: ((e: unknown) => void) | null = null;
     constructor(public text: string) {}
-  } as unknown as typeof SpeechSynthesisUtterance;
+  });
   const speechSynthesisMock = {
     speak: vi.fn((u: MockUtterance) => { utterances.push(u); }),
     cancel: vi.fn(),
     getVoices: vi.fn(() => []),
   };
-  Object.defineProperty(window, 'speechSynthesis', { value: speechSynthesisMock, configurable: true });
-  Object.defineProperty(globalThis, 'speechSynthesis', { value: speechSynthesisMock, configurable: true });
+  vi.stubGlobal('speechSynthesis', speechSynthesisMock);
 
   return { sources, utterances, speechSynthesis: speechSynthesisMock };
 }
@@ -77,18 +76,14 @@ function click(id: string) {
 }
 
 describe('speech-noise screen lifecycle', () => {
-  let originalAudioContext: typeof globalThis.AudioContext;
-
   beforeEach(() => {
     vi.resetModules();
     vi.useFakeTimers();
-    originalAudioContext = globalThis.AudioContext;
     document.body.innerHTML = '<div id="app"></div>';
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    globalThis.AudioContext = originalAudioContext;
   });
 
   it('starts exactly one noise source for a run', async () => {

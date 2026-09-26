@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { installAudioContext, stubGetUserMedia } from '../test/web-audio';
 
 describe('noise-meter', () => {
   describe('rmsToDbSpl', () => {
@@ -33,9 +34,6 @@ describe('noise-meter', () => {
   });
 
   describe('startNoiseMeter', () => {
-    let originalAudioContext: typeof globalThis.AudioContext;
-    let originalMediaDevices: MediaDevices | undefined;
-
     function createMockAnalyser(sampleValue = 0) {
       return {
         fftSize: 2048,
@@ -59,34 +57,20 @@ describe('noise-meter', () => {
     }
 
     function installMockAudioContext(analyser: ReturnType<typeof createMockAnalyser>, source: ReturnType<typeof createMockSource>) {
-      globalThis.AudioContext = class {
-        state = 'running' as AudioContextState;
-        createMediaStreamSource = vi.fn(() => source);
-        createAnalyser = vi.fn(() => analyser);
-      } as unknown as typeof AudioContext;
+      installAudioContext({ createMediaStreamSource: () => source, createAnalyser: () => analyser });
     }
 
     beforeEach(() => {
       vi.resetModules();
       vi.useFakeTimers();
-      originalAudioContext = globalThis.AudioContext;
-      originalMediaDevices = navigator.mediaDevices;
     });
 
     afterEach(() => {
       vi.useRealTimers();
-      globalThis.AudioContext = originalAudioContext;
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: originalMediaDevices,
-        configurable: true,
-      });
     });
 
     it('throws AudioInitError when getUserMedia is unavailable', async () => {
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: undefined,
-        configurable: true,
-      });
+      stubGetUserMedia(null);
 
       const { startNoiseMeter } = await import('./noise-meter');
       const { AudioInitError } = await import('./audio-context');
@@ -94,12 +78,7 @@ describe('noise-meter', () => {
     });
 
     it('throws AudioInitError when permission is denied', async () => {
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: {
-          getUserMedia: vi.fn().mockRejectedValue(new Error('NotAllowedError')),
-        },
-        configurable: true,
-      });
+      stubGetUserMedia(new Error('NotAllowedError'));
 
       const { startNoiseMeter } = await import('./noise-meter');
       const { AudioInitError } = await import('./audio-context');
@@ -108,19 +87,9 @@ describe('noise-meter', () => {
 
     it('stops media tracks when audio setup fails after getUserMedia', async () => {
       const track = createMockTrack();
-      globalThis.AudioContext = class {
-        state = 'suspended' as AudioContextState;
-        resume = vi.fn().mockRejectedValue(new Error('blocked'));
-      } as unknown as typeof AudioContext;
+      installAudioContext({ state: 'suspended', resume: vi.fn().mockRejectedValue(new Error('blocked')) });
 
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: {
-          getUserMedia: vi.fn().mockResolvedValue({
-            getTracks: () => [track],
-          }),
-        },
-        configurable: true,
-      });
+      stubGetUserMedia({ getTracks: () => [track] });
 
       const { startNoiseMeter } = await import('./noise-meter');
       const { AudioInitError } = await import('./audio-context');
@@ -130,20 +99,12 @@ describe('noise-meter', () => {
 
     it('stops media tracks when creating the analyser fails', async () => {
       const track = createMockTrack();
-      globalThis.AudioContext = class {
-        state = 'running' as AudioContextState;
-        createMediaStreamSource = vi.fn(() => createMockSource());
-        createAnalyser = vi.fn(() => { throw new Error('analyser failed'); });
-      } as unknown as typeof AudioContext;
-
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: {
-          getUserMedia: vi.fn().mockResolvedValue({
-            getTracks: () => [track],
-          }),
-        },
-        configurable: true,
+      installAudioContext({
+        createMediaStreamSource: () => createMockSource(),
+        createAnalyser: () => { throw new Error('analyser failed'); },
       });
+
+      stubGetUserMedia({ getTracks: () => [track] });
 
       const { startNoiseMeter } = await import('./noise-meter');
       await expect(startNoiseMeter(() => {})).rejects.toThrow('analyser failed');
@@ -155,14 +116,7 @@ describe('noise-meter', () => {
       const track = createMockTrack();
       installMockAudioContext(createMockAnalyser(0.1), source);
 
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: {
-          getUserMedia: vi.fn().mockResolvedValue({
-            getTracks: () => [track],
-          }),
-        },
-        configurable: true,
-      });
+      stubGetUserMedia({ getTracks: () => [track] });
 
       const { startNoiseMeter } = await import('./noise-meter');
       await expect(startNoiseMeter(() => { throw new Error('callback failed'); })).rejects.toThrow('callback failed');
@@ -177,14 +131,7 @@ describe('noise-meter', () => {
       const track = createMockTrack();
       installMockAudioContext(analyser, source);
 
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: {
-          getUserMedia: vi.fn().mockResolvedValue({
-            getTracks: () => [track],
-          }),
-        },
-        configurable: true,
-      });
+      stubGetUserMedia({ getTracks: () => [track] });
 
       const { startNoiseMeter } = await import('./noise-meter');
       const onSample = vi.fn();
@@ -205,14 +152,7 @@ describe('noise-meter', () => {
       const track = createMockTrack();
       installMockAudioContext(analyser, source);
 
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: {
-          getUserMedia: vi.fn().mockResolvedValue({
-            getTracks: () => [track],
-          }),
-        },
-        configurable: true,
-      });
+      stubGetUserMedia({ getTracks: () => [track] });
 
       const { startNoiseMeter } = await import('./noise-meter');
       const samples: number[] = [];
@@ -246,14 +186,7 @@ describe('noise-meter', () => {
       const track = createMockTrack();
       installMockAudioContext(analyser, source);
 
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: {
-          getUserMedia: vi.fn().mockResolvedValue({
-            getTracks: () => [track],
-          }),
-        },
-        configurable: true,
-      });
+      stubGetUserMedia({ getTracks: () => [track] });
 
       const { startNoiseMeter } = await import('./noise-meter');
       const handle = await startNoiseMeter(() => {});
@@ -270,14 +203,7 @@ describe('noise-meter', () => {
       const track = createMockTrack();
       installMockAudioContext(analyser, source);
 
-      Object.defineProperty(navigator, 'mediaDevices', {
-        value: {
-          getUserMedia: vi.fn().mockResolvedValue({
-            getTracks: () => [track],
-          }),
-        },
-        configurable: true,
-      });
+      stubGetUserMedia({ getTracks: () => [track] });
 
       const { startNoiseMeter } = await import('./noise-meter');
       const handle = await startNoiseMeter(() => {});

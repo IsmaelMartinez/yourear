@@ -183,3 +183,43 @@ describe('compareToAge', () => {
     expect(compareToAge(40, null, null)).toBeNull();
   });
 });
+
+describe('getExpectedThresholds', () => {
+  it('matches the ADR 006 table for a 43-year-old', () => {
+    const t = getExpectedThresholds(43);
+    expect([250, 1000, 4000, 8000].map(f => [f, t[f].median, t[f].p90])).toEqual([
+      [250, 2, 15],
+      [1000, 5, 18],
+      [4000, 16, 40],
+      [8000, 23, 55],
+    ]);
+  });
+
+  it('treats every age up to 20 as the age-20 baseline', () => {
+    const baseline = getExpectedThresholds(20);
+    expect(getExpectedThresholds(10)).toEqual(baseline);
+    expect(getExpectedThresholds(0)).toEqual(baseline);
+    Object.values(baseline).forEach(({ median }) => expect(median).toBe(0));
+  });
+
+  it('keeps p10 <= median <= p90 at every frequency for ages 10 to 90', () => {
+    for (let age = 10; age <= 90; age++) {
+      for (const [frequency, { p10, median, p90 }] of Object.entries(getExpectedThresholds(age))) {
+        expect(p10, `${age} y, ${frequency} Hz`).toBeLessThanOrEqual(median);
+        expect(median, `${age} y, ${frequency} Hz`).toBeLessThanOrEqual(p90);
+      }
+    }
+  });
+
+  it('never puts p10 below -5 dB HL', () => {
+    for (let age = 10; age <= 90; age += 10) {
+      Object.values(getExpectedThresholds(age)).forEach(({ p10 }) => expect(p10).toBeGreaterThanOrEqual(-5));
+    }
+  });
+
+  it('expects more loss at higher frequencies and older ages', () => {
+    const at60 = getExpectedThresholds(60);
+    expect(at60[8000].median).toBeGreaterThan(at60[1000].median);
+    expect(at60[4000].median).toBeGreaterThan(getExpectedThresholds(40)[4000].median);
+  });
+});

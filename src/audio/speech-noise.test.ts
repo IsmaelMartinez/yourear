@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { installAudioContext } from '../test/web-audio';
 import {
   SNR_LEVELS,
   SNRLevel,
@@ -30,13 +31,10 @@ function installMockAudioContext() {
     return { getChannelData: (c: number) => data[c] };
   });
 
-  globalThis.AudioContext = class {
-    state = 'running' as AudioContextState;
-    sampleRate = 100;
-    currentTime = 0;
-    destination = {};
-    createBuffer = createBuffer;
-    createBufferSource = vi.fn(() => {
+  installAudioContext({
+    sampleRate: 100,
+    createBuffer,
+    createBufferSource: () => {
       const source: MockSource = {
         loop: false,
         buffer: null,
@@ -49,8 +47,9 @@ function installMockAudioContext() {
       };
       sources.push(source);
       return source;
-    });
-    createGain = vi.fn(() => {
+    },
+    // Method shorthand so `this` is the context, which setNoiseLevel reads the time from
+    createGain() {
       const node = {
         gain: { value: 1, setTargetAtTime: vi.fn() },
         connect: vi.fn((n) => n),
@@ -59,8 +58,8 @@ function installMockAudioContext() {
       };
       gains.push(node);
       return node;
-    });
-  } as unknown as typeof AudioContext;
+    },
+  });
 
   const live = () => sources.filter(s => s.started && !s.stopped);
   return { sources, gains, createBuffer, live };
@@ -73,15 +72,8 @@ function results(entries: [SNRLevel, number, number][]) {
 }
 
 describe('speech-noise audio', () => {
-  let originalAudioContext: typeof globalThis.AudioContext;
-
   beforeEach(() => {
     vi.resetModules();
-    originalAudioContext = globalThis.AudioContext;
-  });
-
-  afterEach(() => {
-    globalThis.AudioContext = originalAudioContext;
   });
 
   it('leaves exactly one live looping source when startNoise is called twice in the same tick', async () => {

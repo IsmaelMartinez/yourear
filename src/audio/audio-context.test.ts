@@ -1,15 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { installAudioContext } from '../test/web-audio';
 
 describe('audio-context', () => {
-  let originalAudioContext: typeof globalThis.AudioContext;
-
   beforeEach(() => {
     vi.resetModules();
-    originalAudioContext = globalThis.AudioContext;
-  });
-
-  afterEach(() => {
-    globalThis.AudioContext = originalAudioContext;
   });
 
   describe('AudioInitError', () => {
@@ -31,22 +25,16 @@ describe('audio-context', () => {
 
   describe('getAudioContext', () => {
     it('creates an AudioContext on first call', async () => {
-      const ctorSpy = vi.fn();
-      globalThis.AudioContext = class {
-        constructor() { ctorSpy(); }
-        state = 'running' as AudioContextState;
-      } as unknown as typeof AudioContext;
+      const constructed = installAudioContext();
 
       const { getAudioContext } = await import('./audio-context');
       const ctx = getAudioContext();
-      expect(ctorSpy).toHaveBeenCalledOnce();
-      expect(ctx).toBeDefined();
+      expect(constructed).toHaveBeenCalledOnce();
+      expect(constructed).toHaveBeenCalledWith(ctx);
     });
 
     it('returns the same instance on subsequent calls', async () => {
-      globalThis.AudioContext = class {
-        state = 'running' as AudioContextState;
-      } as unknown as typeof AudioContext;
+      installAudioContext();
 
       const { getAudioContext } = await import('./audio-context');
       const a = getAudioContext();
@@ -55,9 +43,9 @@ describe('audio-context', () => {
     });
 
     it('throws AudioInitError when AudioContext constructor fails', async () => {
-      globalThis.AudioContext = class {
+      vi.stubGlobal('AudioContext', class {
         constructor() { throw new Error('not supported'); }
-      } as unknown as typeof AudioContext;
+      });
 
       const { getAudioContext, AudioInitError } = await import('./audio-context');
       expect(() => getAudioContext()).toThrow(AudioInitError);
@@ -68,10 +56,7 @@ describe('audio-context', () => {
   describe('ensureRunning', () => {
     it('resumes a suspended context', async () => {
       const resumeSpy = vi.fn().mockResolvedValue(undefined);
-      globalThis.AudioContext = class {
-        state = 'suspended' as AudioContextState;
-        resume = resumeSpy;
-      } as unknown as typeof AudioContext;
+      installAudioContext({ state: 'suspended', resume: resumeSpy });
 
       const { ensureRunning } = await import('./audio-context');
       const ctx = await ensureRunning();
@@ -81,10 +66,7 @@ describe('audio-context', () => {
 
     it('does not call resume on a running context', async () => {
       const resumeSpy = vi.fn();
-      globalThis.AudioContext = class {
-        state = 'running' as AudioContextState;
-        resume = resumeSpy;
-      } as unknown as typeof AudioContext;
+      installAudioContext({ resume: resumeSpy });
 
       const { ensureRunning } = await import('./audio-context');
       await ensureRunning();
@@ -92,10 +74,7 @@ describe('audio-context', () => {
     });
 
     it('throws AudioInitError when resume fails', async () => {
-      globalThis.AudioContext = class {
-        state = 'suspended' as AudioContextState;
-        resume = vi.fn().mockRejectedValue(new Error('user gesture required'));
-      } as unknown as typeof AudioContext;
+      installAudioContext({ state: 'suspended', resume: vi.fn().mockRejectedValue(new Error('user gesture required')) });
 
       const { ensureRunning, AudioInitError } = await import('./audio-context');
       await expect(ensureRunning()).rejects.toThrow(AudioInitError);
