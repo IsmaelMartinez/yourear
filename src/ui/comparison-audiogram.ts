@@ -2,7 +2,7 @@
  * Comparison Audiogram - Overlay multiple hearing profiles for trend analysis
  */
 
-import { HearingProfile } from '../types';
+import { HearingProfile, calculatePTA } from '../types';
 import { AudiogramBase, COLORS, PADDING } from './audiogram-base';
 
 // Distinct colors for different profiles
@@ -79,38 +79,21 @@ export class ComparisonAudiogram extends AudiogramBase {
 }
 
 /**
- * Calculate the change in PTA between two profiles.
- * Uses 500, 1000, 2000 Hz (standard PTA), falls back to any available frequencies.
+ * Calculate the change in PTA between two profiles (see calculatePTA for the
+ * Quick Test fallback). `standard` is false if any PTA used that fallback.
  */
 export function calculatePTAChange(
   older: HearingProfile,
   newer: HearingProfile
-): { right: number | null; left: number | null } {
-  const ptaFreqs = [500, 1000, 2000];
-
-  const calcPTA = (profile: HearingProfile, ear: 'rightEar' | 'leftEar'): number | null => {
-    const isValidNumber = (v: number | null | undefined): v is number =>
-      v !== null && v !== undefined && !isNaN(v);
-
-    let values = ptaFreqs
-      .map(f => profile.thresholds.find(t => t.frequency === f)?.[ear])
-      .filter(isValidNumber);
-
-    if (values.length < 2) {
-      values = profile.thresholds.map(t => t[ear]).filter(isValidNumber);
-    }
-
-    if (values.length === 0) return null;
-    return values.reduce((a, b) => a + b, 0) / values.length;
+): { right: number | null; left: number | null; standard: boolean } {
+  const change = (ear: 'rightEar' | 'leftEar') => {
+    const before = calculatePTA(older.thresholds, ear);
+    const after = calculatePTA(newer.thresholds, ear);
+    return { before, after, delta: before && after ? after.value - before.value : null };
   };
+  const right = change('rightEar');
+  const left = change('leftEar');
+  const standard = [right.before, right.after, left.before, left.after].every(p => !p || p.standard);
 
-  const olderRight = calcPTA(older, 'rightEar');
-  const newerRight = calcPTA(newer, 'rightEar');
-  const olderLeft = calcPTA(older, 'leftEar');
-  const newerLeft = calcPTA(newer, 'leftEar');
-
-  return {
-    right: olderRight !== null && newerRight !== null ? newerRight - olderRight : null,
-    left: olderLeft !== null && newerLeft !== null ? newerLeft - olderLeft : null,
-  };
+  return { right: right.delta, left: left.delta, standard };
 }

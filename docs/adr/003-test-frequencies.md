@@ -55,8 +55,9 @@ Offer three test modes with different frequency coverage/time trade-offs.
 - Quick Test catches common issues in ~25% of Full Test time
 - Full Test matches clinical audiometry's standard octave frequencies
 - Detailed Test adds inter-octave resolution when users want it
-- PTA (Pure Tone Average) can be calculated from 500, 1000, 2000 Hz in all three modes
+- PTA (Pure Tone Average) is calculated from 500, 1000, 2000 Hz in Full and Detailed modes
 
 ### Negative
+- Quick Test has no 500 or 2000 Hz, so `calculatePTA` falls back to the average of all tested frequencies (1000, 4000, 8000 Hz) whenever fewer than two PTA frequencies were tested; results, PDF and comparison label it an average rather than a PTA, and the age comparison uses expected medians at the same frequencies
 - More modes = more UI/UX surface to maintain
 - Extended frequencies (125 Hz at the low end; 750, 1500, 3000, 6000 Hz between octaves) stress consumer hardware limits
