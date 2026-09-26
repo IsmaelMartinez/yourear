@@ -83,6 +83,11 @@ Standard microphones cannot capture frequencies above ~20 kHz.
 - Tone duration: 1-1.5 seconds
 - **Safe for extended testing**
 
+### Output Level Mapping
+`src/audio/tone-generator.ts` maps hearing level to digital output with a fixed reference of 0 dB HL = -90 dBFS, one dB of output per dB HL. The test range therefore runs from -100 dBFS at -10 dB HL to 0 dBFS at 90 dB HL, so every 5 dB step up to the maximum is a distinct, louder tone and nothing in the range clips. An earlier reference of -60 dBFS reached full scale at 60 dB HL, which made 60-90 dB HL sound identical (issue #89).
+
+Because the mapping is linear, every level sits a fixed distance from the 40 dB HL calibration tone (-50 dBFS): 90 dB HL is always 50 dB louder than the tone the user sets a comfortable volume against, and results recorded under the old reference remain comparable below 60 dB HL. The trade-off is that the calibration tone is 30 dB quieter at a given system volume, so users turn the device volume up further during calibration. On 16-bit outputs the quietest levels (around -10 to 0 dB HL) sit near the ~-96 dBFS quantisation floor; Web Audio renders in 32-bit float and most current DACs are 24-bit, and those levels are below where consumer hardware can be trusted anyway.
+
 ---
 
 ## 🌐 Browser Constraints

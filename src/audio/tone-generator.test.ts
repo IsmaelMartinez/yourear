@@ -86,6 +86,7 @@ describe('tone-generator', () => {
           value: 0,
           setValueAtTime: vi.fn(),
           linearRampToValueAtTime: vi.fn(),
+          cancelScheduledValues: vi.fn(),
         },
         connect: vi.fn().mockReturnThis(),
         disconnect: vi.fn(),
@@ -264,6 +265,133 @@ describe('tone-generator', () => {
       }, { timeout: 100 });
       
       mockOscillator.onended?.();
+      await promise;
+    });
+
+    it('ramp targets strictly increase from minLevel to maxLevel', async () => {
+      const { playTone } = await import('./tone-generator');
+      const { DEFAULT_TEST_CONFIG } = await import('../types');
+      const { minLevel, maxLevel, stepUp } = DEFAULT_TEST_CONFIG;
+
+      const targets: number[] = [];
+      for (let level = minLevel; level <= maxLevel; level += stepUp) {
+        mockGain.gain.linearRampToValueAtTime.mockClear();
+        const promise = playTone({ frequency: 1000, level, duration: 100, channel: 'right' });
+        await vi.waitFor(() => {
+          expect(mockGain.gain.linearRampToValueAtTime).toHaveBeenCalled();
+        }, { timeout: 100 });
+        // First ramp is the fade-in to the target gain
+        targets.push(mockGain.gain.linearRampToValueAtTime.mock.calls[0][0]);
+        mockOscillator.onended?.();
+        await promise;
+      }
+
+      for (let i = 1; i < targets.length; i++) {
+        expect(targets[i]).toBeGreaterThan(targets[i - 1]);
+      }
+      // maxLevel reaches full scale without exceeding it
+      expect(targets[targets.length - 1]).toBeCloseTo(1, 6);
+    });
+  });
+
+  describe('tone lifecycle', () => {
+    function createNodes() {
+      const oscillator = {
+        type: 'sine' as OscillatorType,
+        frequency: { value: 0 },
+        connect: vi.fn().mockReturnThis(),
+        start: vi.fn(),
+        stop: vi.fn(),
+        disconnect: vi.fn(),
+        onended: null as (() => void) | null,
+      };
+      const gain = {
+        gain: {
+          value: 0.5,
+          setValueAtTime: vi.fn(),
+          linearRampToValueAtTime: vi.fn(),
+          cancelScheduledValues: vi.fn(),
+        },
+        connect: vi.fn().mockReturnThis(),
+        disconnect: vi.fn(),
+      };
+      const panner = {
+        pan: { value: 0 },
+        connect: vi.fn().mockReturnThis(),
+        disconnect: vi.fn(),
+      };
+      return { oscillator, gain, panner };
+    }
+
+    let created: ReturnType<typeof createNodes>[];
+    let originalAudioContext: typeof globalThis.AudioContext;
+
+    beforeEach(() => {
+      vi.resetModules();
+      created = [];
+      originalAudioContext = globalThis.AudioContext;
+      // Each tone gets fresh nodes so we can tell them apart
+      globalThis.AudioContext = class MockAudioContext {
+        state = 'running' as AudioContextState;
+        currentTime = 10;
+        destination = {};
+        createOscillator = vi.fn(() => {
+          created.push(createNodes());
+          return created[created.length - 1].oscillator;
+        });
+        createGain = vi.fn(() => created[created.length - 1].gain);
+        createStereoPanner = vi.fn(() => created[created.length - 1].panner);
+        resume = vi.fn().mockResolvedValue(undefined);
+      } as unknown as typeof AudioContext;
+    });
+
+    afterEach(() => {
+      globalThis.AudioContext = originalAudioContext;
+    });
+
+    it("a stale onended from the previous tone does not disconnect the next tone", async () => {
+      const { playTone } = await import('./tone-generator');
+
+      const first = playTone({ frequency: 1000, level: 40, duration: 2000, channel: 'right' });
+      await vi.waitFor(() => expect(created).toHaveLength(1));
+      const second = playTone({ frequency: 1000, level: 40, duration: 2000, channel: 'left' });
+      await vi.waitFor(() => expect(created).toHaveLength(2));
+
+      // The first oscillator's ended event arrives asynchronously, after the second tone started
+      await Promise.resolve();
+      created[0].oscillator.onended?.();
+      await first;
+
+      expect(created[0].oscillator.disconnect).toHaveBeenCalled();
+      expect(created[1].oscillator.disconnect).not.toHaveBeenCalled();
+      expect(created[1].gain.disconnect).not.toHaveBeenCalled();
+      expect(created[1].panner.disconnect).not.toHaveBeenCalled();
+
+      created[1].oscillator.onended?.();
+      await second;
+      expect(created[1].oscillator.disconnect).toHaveBeenCalled();
+    });
+
+    it('stopTone ramps the gain to 0 before stopping the oscillator', async () => {
+      const { playTone, stopTone } = await import('./tone-generator');
+
+      const promise = playTone({ frequency: 1000, level: 40, duration: 2000, channel: 'right' });
+      await vi.waitFor(() => expect(created).toHaveLength(1));
+      const { oscillator, gain } = created[0];
+      gain.gain.linearRampToValueAtTime.mockClear();
+      oscillator.stop.mockClear();
+
+      stopTone();
+
+      expect(gain.gain.cancelScheduledValues).toHaveBeenCalledWith(10);
+      expect(gain.gain.linearRampToValueAtTime).toHaveBeenCalledTimes(1);
+      const [rampValue, rampEnd] = gain.gain.linearRampToValueAtTime.mock.calls[0];
+      expect(rampValue).toBe(0);
+      expect(rampEnd).toBeGreaterThan(10);
+      expect(oscillator.stop).toHaveBeenCalledTimes(1);
+      expect(oscillator.stop.mock.calls[0][0]).toBeGreaterThanOrEqual(rampEnd);
+
+      oscillator.onended?.();
       await promise;
     });
   });
