@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { HearingTest } from './hearing-test';
+import { playTone } from './tone-generator';
 
 // Mock the tone generator
 vi.mock('./tone-generator', () => ({
@@ -169,5 +170,49 @@ describe('HearingTest', () => {
       expect(test.getState().currentLevel).toBe(30);
     });
   });
-});
 
+  describe('stop() during a tone', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    /** Make the next playTone call resolve only when the returned function is called */
+    function deferNextTone(): () => void {
+      let finish!: () => void;
+      vi.mocked(playTone).mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
+      return () => finish();
+    }
+
+    it('leaves no response timer when the tone ends after stop()', async () => {
+      const test = new HearingTest();
+      const endTone = deferNextTone();
+
+      const started = test.start();
+      test.stop();
+      endTone();
+      await started;
+
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('does not change the level of a restarted test', async () => {
+      const test = new HearingTest({ startLevel: 40, stepUp: 5, responseDuration: 3000 });
+      const endFirstTone = deferNextTone();
+
+      const first = test.start();
+      test.stop();
+      const restarted = test.start();
+      endFirstTone();
+      await Promise.all([first, restarted]);
+
+      // Only the restarted test's own response window is pending
+      expect(vi.getTimerCount()).toBe(1);
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(test.getState().currentLevel).toBe(45);
+    });
+  });
+});

@@ -72,11 +72,19 @@ export async function startNoiseMeter(
     );
   }
 
-  const ctx = await ensureRunning();
-  const source = ctx.createMediaStreamSource(stream);
-  const analyser = ctx.createAnalyser();
-  analyser.fftSize = FFT_SIZE;
-  source.connect(analyser);
+  let analyser: AnalyserNode;
+  let source: MediaStreamAudioSourceNode;
+  try {
+    const ctx = await ensureRunning();
+    source = ctx.createMediaStreamSource(stream);
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = FFT_SIZE;
+    source.connect(analyser);
+  } catch (error) {
+    // Release the microphone we just acquired
+    stream.getTracks().forEach((track) => track.stop());
+    throw error;
+  }
 
   const buffer = new Float32Array(analyser.fftSize);
   let peakDb = 0;
@@ -96,9 +104,7 @@ export async function startNoiseMeter(
   };
 
   const interval = setInterval(sample, SAMPLE_INTERVAL_MS);
-  sample();
-
-  return {
+  const handle: NoiseMeterHandle = {
     stop() {
       if (stopped) return;
       stopped = true;
@@ -108,4 +114,14 @@ export async function startNoiseMeter(
       stream.getTracks().forEach((track) => track.stop());
     },
   };
+
+  try {
+    sample();
+  } catch (error) {
+    // No handle reaches the caller, so release the microphone here
+    handle.stop();
+    throw error;
+  }
+
+  return handle;
 }

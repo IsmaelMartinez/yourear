@@ -2,20 +2,12 @@
  * Test runner service - manages hearing test lifecycle
  */
 
-import { getState, setHearingTest, navigateTo } from '../state/app-state';
+import { getState, setState, navigateTo, rerender } from '../state/app-state';
 import { createProfile } from '../storage/profile';
 import { HearingTest, TestEventType } from '../audio/hearing-test';
+import { AudioInitError } from '../audio/audio-context';
 import { QUICK_TEST_CONFIG, DETAILED_TEST_CONFIG } from '../types';
-
-// Render callback - set by main.ts
-let renderCallback: (() => void) | null = null;
-
-/**
- * Set the render callback function (called by main.ts)
- */
-export function setTestRenderCallback(callback: () => void): void {
-  renderCallback = callback;
-}
+import { announce } from '../utils/dom';
 
 /**
  * Start the hearing test
@@ -29,22 +21,34 @@ export function startTest(): void {
       : undefined;
   const hearingTest = new HearingTest(config);
   
-  // Store test instance
-  setHearingTest(hearingTest);
-  
-  // Setup event handlers
+  // Setup event handlers, ignoring a test that has since been stopped
   hearingTest.on((event: TestEventType) => {
+    if (getState().hearingTest !== hearingTest) return;
     if (event === 'stateChange') {
-      renderCallback?.();
+      rerender();
     }
     if (event === 'testComplete') {
       handleTestComplete(hearingTest, userAge);
     }
   });
   
-  // Navigate to test screen and start
-  navigateTo('test');
-  hearingTest.start();
+  // Store test instance, navigate to test screen and start
+  setState({ hearingTest, screen: 'test' });
+  hearingTest.start().catch((error: unknown) => {
+    if (getState().hearingTest !== hearingTest) return;
+    stopTest();
+    const reason = error instanceof AudioInitError ? error.message : 'Audio could not be started.';
+    announce(`Could not start the test. ${reason}`, 'assertive');
+  });
+}
+
+/**
+ * Stop the active hearing test and return to home
+ */
+export function stopTest(): void {
+  const { hearingTest } = getState();
+  setState({ hearingTest: null, screen: 'home' });
+  hearingTest?.stop();
 }
 
 /**
