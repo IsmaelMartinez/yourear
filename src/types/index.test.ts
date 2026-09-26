@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyHearingLoss, TEST_FREQUENCIES, DEFAULT_TEST_CONFIG, QUICK_TEST_CONFIG, formatFrequency } from './index';
+import { classifyHearingLoss, TEST_FREQUENCIES, DEFAULT_TEST_CONFIG, QUICK_TEST_CONFIG, formatFrequency, calculatePTA, compareToAge, getExpectedThresholds, HearingThreshold } from './index';
 
 describe('classifyHearingLoss', () => {
   it('classifies normal hearing (≤20 dB)', () => {
@@ -118,3 +118,60 @@ describe('formatFrequency', () => {
   });
 });
 
+
+describe('calculatePTA', () => {
+  it('averages 500, 1000 and 2000 Hz when tested', () => {
+    const thresholds: HearingThreshold[] = [
+      { frequency: 250, rightEar: 50, leftEar: 50 },
+      { frequency: 500, rightEar: 10, leftEar: 10 },
+      { frequency: 1000, rightEar: 15, leftEar: 10 },
+      { frequency: 2000, rightEar: 20, leftEar: 20 },
+    ];
+    expect(calculatePTA(thresholds, 'rightEar')).toEqual({ value: 15, frequencies: [500, 1000, 2000], standard: true });
+  });
+
+  it('ignores undefined, null and NaN values', () => {
+    const thresholds = [
+      { frequency: 500, rightEar: undefined, leftEar: 10 },
+      { frequency: 1000, rightEar: 20, leftEar: null },
+      { frequency: 2000, rightEar: 30, leftEar: NaN },
+    ] as unknown as HearingThreshold[];
+    expect(calculatePTA(thresholds, 'rightEar')?.value).toBe(25);
+  });
+
+  it('falls back to the average of tested frequencies for Quick Test', () => {
+    const thresholds: HearingThreshold[] = [
+      { frequency: 1000, rightEar: 15, leftEar: 15 },
+      { frequency: 4000, rightEar: 25, leftEar: 25 },
+      { frequency: 8000, rightEar: 35, leftEar: 35 },
+    ];
+    expect(calculatePTA(thresholds, 'rightEar')).toEqual({ value: 25, frequencies: [1000, 4000, 8000], standard: false });
+  });
+
+  it('returns null when the ear has no values', () => {
+    expect(calculatePTA([{ frequency: 1000, rightEar: null, leftEar: 10 }], 'rightEar')).toBeNull();
+  });
+});
+
+describe('compareToAge', () => {
+  const pta = (value: number) => ({ value, frequencies: [500, 1000, 2000], standard: true });
+
+  it('averages a 0 dB ear with the other ear', () => {
+    // right 0, left 20 -> average 10; expected at age 60 is (6 + 8 + 14) / 3 ≈ 9.3
+    const result = compareToAge(60, pta(0), pta(20));
+    expect(result?.average).toBe(10);
+    expect(result?.verdict).toBe('typical');
+  });
+
+  it('uses the expected medians of the frequencies actually averaged', () => {
+    const expected = getExpectedThresholds(40);
+    const quick = { value: 0, frequencies: [1000, 4000, 8000], standard: false };
+    const result = compareToAge(40, quick, null);
+    expect(result?.expected).toBeCloseTo((expected[1000].median + expected[4000].median + expected[8000].median) / 3);
+    expect(result?.verdict).toBe('better');
+  });
+
+  it('returns null when neither ear has a PTA', () => {
+    expect(compareToAge(40, null, null)).toBeNull();
+  });
+});

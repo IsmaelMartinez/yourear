@@ -148,14 +148,6 @@ function renderChangesSummary(profiles: HearingProfile[]): string {
   const daysBetween = Math.round((newest.createdAt.getTime() - oldest.createdAt.getTime()) / (1000 * 60 * 60 * 24));
   const change = calculatePTAChange(oldest, newest);
   
-  // Check if profiles have standard PTA frequencies (500, 1000, 2000 Hz)
-  const ptaFreqs = [500, 1000, 2000];
-  const hasStandardPTA = (profile: HearingProfile) => {
-    const freqs = profile.thresholds.map(t => t.frequency);
-    return ptaFreqs.filter(f => freqs.includes(f)).length >= 2;
-  };
-  const usingStandardPTA = hasStandardPTA(oldest) && hasStandardPTA(newest);
-  
   const formatChange = (val: number | null): string => {
     if (val === null || isNaN(val)) return 'N/A';
     const sign = val > 0 ? '+' : '';
@@ -170,8 +162,8 @@ function renderChangesSummary(profiles: HearingProfile[]): string {
     return '(stable)';
   };
   
-  const label = usingStandardPTA ? 'PTA' : 'Avg';
-  const footnote = usingStandardPTA 
+  const label = change.standard ? 'PTA' : 'Avg';
+  const footnote = change.standard 
     ? 'PTA = Pure Tone Average (500, 1000, 2000 Hz). Changes ≤5 dB are typically within test variability.'
     : 'Avg = Average of tested frequencies (Quick Test uses 1000, 4000, 8000 Hz). For accurate PTA, use Full or Detailed Test.';
   

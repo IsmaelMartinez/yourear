@@ -3,7 +3,7 @@
  * Standard conventions: O = Right ear, X = Left ear
  */
 
-import { HearingProfile, classifyHearingLoss, getExpectedThresholds } from '../types';
+import { HearingProfile, classifyHearingLoss, getExpectedThresholds, calculatePTA, compareToAge, GRADE_LABELS, AGE_VERDICT_LABELS } from '../types';
 import { AudiogramBase, COLORS, FREQUENCIES, PADDING } from './audiogram-base';
 
 export class Audiogram extends AudiogramBase {
@@ -94,25 +94,6 @@ export class Audiogram extends AudiogramBase {
 }
 
 export function generateSummary(profile: HearingProfile): string {
-  const ptaFreqs = [500, 1000, 2000];
-
-  const calcPTA = (ear: 'rightEar' | 'leftEar') => {
-    const values = ptaFreqs
-      .map(f => profile.thresholds.find(t => t.frequency === f)?.[ear])
-      .filter((v): v is number => v !== null);
-    return values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
-  };
-
-  const formatGrade = (grade: string) => ({
-    'normal': '✅ Normal',
-    'slight': '🟢 Slight loss',
-    'mild': '🟡 Mild loss',
-    'moderate': '🟠 Moderate loss',
-    'moderately-severe': '🟠 Moderately severe loss',
-    'severe': '🔴 Severe loss',
-    'profound': '🔴 Profound loss',
-  }[grade] || grade);
-
   const lines = ['📊 Hearing Assessment Summary'];
 
   if (profile.age) {
@@ -120,31 +101,26 @@ export function generateSummary(profile: HearingProfile): string {
   }
   lines.push('');
 
-  const rightPTA = calcPTA('rightEar');
-  const leftPTA = calcPTA('leftEar');
+  const rightPTA = calculatePTA(profile.thresholds, 'rightEar');
+  const leftPTA = calculatePTA(profile.thresholds, 'leftEar');
 
-  if (rightPTA !== null) {
-    lines.push(`Right ear: ${rightPTA.toFixed(0)} dB HL (${formatGrade(classifyHearingLoss(rightPTA))})`);
-  }
-  if (leftPTA !== null) {
-    lines.push(`Left ear: ${leftPTA.toFixed(0)} dB HL (${formatGrade(classifyHearingLoss(leftPTA))})`);
-  }
-
-  if (profile.age && (rightPTA !== null || leftPTA !== null)) {
-    const expected = getExpectedThresholds(profile.age);
-    const expectedPTA = (expected[500].median + expected[1000].median + expected[2000].median) / 3;
-
-    lines.push('');
-    lines.push(`📈 Expected PTA for age ${profile.age}: ~${expectedPTA.toFixed(0)} dB HL`);
-
-    const avgPTA = ((rightPTA || 0) + (leftPTA || 0)) / (rightPTA && leftPTA ? 2 : 1);
-    if (avgPTA <= expectedPTA) {
-      lines.push('✨ Your hearing is better than or equal to average for your age!');
-    } else if (avgPTA <= expectedPTA + 10) {
-      lines.push('👍 Your hearing is typical for your age.');
-    } else {
-      lines.push('📋 Your hearing shows more loss than typical for your age.');
+  for (const [name, pta] of [['Right', rightPTA], ['Left', leftPTA]] as const) {
+    if (pta) {
+      const { icon, label } = GRADE_LABELS[classifyHearingLoss(pta.value)];
+      lines.push(`${name} ear: ${pta.value.toFixed(0)} dB HL (${icon} ${label})`);
     }
+  }
+  const standard = [rightPTA, leftPTA].every(p => !p || p.standard);
+  if (!standard) {
+    lines.push('Average of tested frequencies (500/2000 Hz not tested). Use Full or Detailed Test for a true PTA.');
+  }
+
+  const age = profile.age ? compareToAge(profile.age, rightPTA, leftPTA) : null;
+  if (age) {
+    const { icon, label } = AGE_VERDICT_LABELS[age.verdict];
+    lines.push('');
+    lines.push(`📈 Expected ${standard ? 'PTA' : 'average'} for age ${profile.age}: ~${age.expected.toFixed(0)} dB HL`);
+    lines.push(`${icon} ${label}`);
   }
 
   lines.push('');

@@ -136,9 +136,23 @@ describe('generateSummary', () => {
     });
     const summary = generateSummary(profile);
     
-    // PTA only uses 1000Hz in this case (500 and 2000 are missing)
-    expect(summary).toContain('Right ear');
-    expect(summary).toContain('Left ear');
+    // 500 and 2000 Hz are missing, so it averages the tested frequencies: (15 + 25 + 35) / 3 = 25
+    expect(summary).not.toContain('NaN');
+    expect(summary).toContain('Right ear: 25 dB HL (🟢 Slight loss)');
+    expect(summary).toContain('Left ear: 25 dB HL (🟢 Slight loss)');
+  });
+
+  it('averages a 0 dB ear with the other ear for the age verdict', () => {
+    // Average (0 + 20) / 2 = 10 vs expected ~9 at age 60 -> typical. Treating 0 as missing gives 20 -> worse.
+    const profile = createProfile({
+      age: 60,
+      thresholds: [
+        { frequency: 500, rightEar: 0, leftEar: 20 },
+        { frequency: 1000, rightEar: 0, leftEar: 20 },
+        { frequency: 2000, rightEar: 0, leftEar: 20 },
+      ],
+    });
+    expect(generateSummary(profile)).toContain('Your hearing is typical for your age');
   });
 });
 
