@@ -36,6 +36,9 @@ function slide(id: string, value: number): void {
 
 describe('tinnitus screen', () => {
   beforeEach(() => {
+    // renderTinnitus() schedules focusMain() and announce() timers; keep them from
+    // firing after the jsdom environment is torn down.
+    vi.useFakeTimers();
     document.body.innerHTML = '<div id="app"></div>';
     resetTinnitusSettings();
     renderTinnitus();
@@ -43,14 +46,19 @@ describe('tinnitus screen', () => {
 
   afterEach(() => {
     cleanupTinnitusScreen();
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it('shows "Stop Tone" once the tone has started and "Play Tone" after stopping', async () => {
     expect(toggleButton().textContent).toContain('Play Tone');
     toggleButton().click();
-    await vi.waitFor(() => expect(toggleButton().textContent).toContain('Stop Tone'));
+    // Flush the awaited startTinnitusTone() so the click handler finishes
+    await vi.advanceTimersByTimeAsync(0);
+    expect(toggleButton().textContent).toContain('Stop Tone');
     toggleButton().click();
-    await vi.waitFor(() => expect(toggleButton().textContent).toContain('Play Tone'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(toggleButton().textContent).toContain('Play Tone');
   });
 
   it('updates the match loudness live from the loudness slider', () => {

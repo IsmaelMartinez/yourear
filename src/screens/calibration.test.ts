@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { renderCalibration, cleanupCalibrationScreen } from './calibration';
 import { startNoiseMeter } from '../audio/noise-meter';
 import { getState, resetState, setRenderCallback } from '../state/app-state';
@@ -28,6 +28,9 @@ describe('calibration screen', () => {
   let meterStop: Mock<() => void>;
 
   beforeEach(() => {
+    // renderCalibration() schedules focusMain() and announce() timers; keep them from
+    // firing after the jsdom environment is torn down.
+    vi.useFakeTimers();
     vi.clearAllMocks();
     cleanupCalibrationScreen();
     resetState();
@@ -36,6 +39,11 @@ describe('calibration screen', () => {
     setRenderCallback(renderSpy);
     meterStop = vi.fn();
     vi.mocked(startNoiseMeter).mockResolvedValue({ stop: meterStop });
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
   });
 
   it('updates the age without re-rendering the screen', () => {
@@ -49,9 +57,9 @@ describe('calibration screen', () => {
   it('stops a running noise meter on cleanup, even after the age changed', async () => {
     renderCalibration();
     document.getElementById('noise-check')!.click();
-    await vi.waitFor(() => {
-      expect(document.getElementById('noise-status')!.hidden).toBe(false);
-    });
+    // Flush the awaited startNoiseMeter() so the click handler finishes
+    await vi.advanceTimersByTimeAsync(0);
+    expect(document.getElementById('noise-status')!.hidden).toBe(false);
 
     changeAge('50');
     cleanupCalibrationScreen();
@@ -67,9 +75,8 @@ describe('calibration screen', () => {
     document.getElementById('noise-check')!.click();
     cleanupCalibrationScreen();
     resolveMeter({ stop: meterStop });
+    await vi.advanceTimersByTimeAsync(0);
 
-    await vi.waitFor(() => {
-      expect(meterStop).toHaveBeenCalledTimes(1);
-    });
+    expect(meterStop).toHaveBeenCalledTimes(1);
   });
 });
