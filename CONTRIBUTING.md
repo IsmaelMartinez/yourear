@@ -62,13 +62,14 @@ yourear/
 │   │   ├── audio-context.ts  # Shared AudioContext singleton
 │   │   ├── tone-generator.ts # Pure tone synthesis (Web Audio API)
 │   │   ├── tinnitus-tone.ts  # Adjustable tone for tinnitus matching
-│   │   ├── speech-noise.ts   # Noise generator and speech synthesis
+│   │   ├── speech-noise.ts   # Pink noise and word-clip playback at a set SNR
 │   │   ├── noise-meter.ts    # Microphone ambient noise check
 │   │   └── hearing-test.ts   # Test logic (Hughson-Westlake procedure)
 │   ├── ui/
 │   │   ├── audiogram-base.ts # Shared audiogram canvas drawing
 │   │   ├── audiogram.ts      # Canvas audiogram visualization
-│   │   └── comparison-audiogram.ts  # Multi-profile overlay chart
+│   │   ├── comparison-audiogram.ts  # Multi-profile overlay chart
+│   │   └── threshold-table.ts  # Screen-reader table of plotted values
 │   ├── storage/
 │   │   └── profile.ts        # LocalStorage management
 │   ├── state/
@@ -78,8 +79,13 @@ yourear/
 │   │   └── pdf-export.ts     # PDF report generation
 │   ├── utils/
 │   │   └── dom.ts            # DOM helper utilities
+│   ├── test/
+│   │   └── web-audio.ts      # Shared Web Audio test stubs
 │   └── types/
 │       └── index.ts          # TypeScript interfaces & utilities
+├── public/speech/            # Word clips for the speech-in-noise test
+├── scripts/
+│   └── generate-speech-clips.sh  # Regenerates public/speech (espeak-ng + ffmpeg)
 ├── docs/
 │   ├── adr/                  # Architecture Decision Records
 │   └── research/             # Research & future planning

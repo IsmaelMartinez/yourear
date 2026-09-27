@@ -165,8 +165,8 @@ export function getExpectedThresholds(age: number): Record<number, { p10: number
   // Simplified model based on ISO 7029 for males
   const ageOffset = Math.max(0, age - 20);
   
-  // p10 sits half the median-to-p90 spread below the median (ISO 7029's lower
-  // spread is narrower than its upper one), floored at -5 dB HL (excellent hearing)
+  // p10 sits half the median-to-p90 spread below the median, floored at -5 dB HL.
+  // The 0.5 factor is a simplification, not a value taken from ISO 7029's tables.
   const band = (median: number, p90: number) =>
     ({ p10: Math.max(-5, median - Math.round((p90 - median) * 0.5)), median, p90 });
 
