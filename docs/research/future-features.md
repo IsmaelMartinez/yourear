@@ -8,7 +8,7 @@
 | **Profile Comparison** | Overlay 2-5 profiles to track hearing changes over time |
 | **PWA Support** | Installable app with offline support via vite-plugin-pwa |
 | **Extended Frequencies** | Detailed test with 11 frequencies including inter-octave |
-| **Speech-in-Noise Test** | Measure hearing in noise using Web Speech API + pink noise |
+| **Speech-in-Noise Test** | Measure hearing in noise using espeak-ng word clips + pink noise at a true SNR |
 | **Tinnitus Matcher** | Identify tinnitus frequency (100Hz-12kHz) and loudness |
 | **Toolchain upgrades** | TypeScript 7 and Vite 8 (vite-plugin-pwa 1.3 supports Vite 8) |
 | **Environmental Noise Check** | Optional mic-based ambient noise meter on the calibration screen |
