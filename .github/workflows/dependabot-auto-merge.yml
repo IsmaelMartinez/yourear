@@ -17,16 +17,23 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Only patch/minor bumps of dev dependencies merge unattended. For a
-      # grouped PR, dependency-type is direct:production if any member is, and
-      # update-type is the highest bump, so one runtime or major entry opts the
-      # whole group out.
-      - name: Enable auto-merge on patch/minor dev-dependency updates
+      # Only patch/minor bumps of dev dependencies, and patch bumps of
+      # transitive (indirect) dependencies, merge unattended. A transitive
+      # patch is a lockfile-only change, often the fix for an open alert:
+      # dompurify in #138 sat unmerged for days because only
+      # direct:development qualified. Direct runtime dependencies still get a
+      # human review. For a grouped PR, dependency-type is direct:production
+      # if any member is, and update-type is the highest bump, so one runtime
+      # or major entry opts the whole group out. The branch ruleset requires
+      # status checks, so --auto waits for CI.
+      - name: Enable auto-merge on safe dependency updates
         if: >-
-          (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-           steps.metadata.outputs.update-type == 'version-update:semver-minor') &&
-          steps.metadata.outputs.dependency-type == 'direct:development' &&
-          steps.metadata.outputs.package-ecosystem != 'github_actions'
+          steps.metadata.outputs.package-ecosystem != 'github_actions' &&
+          ((steps.metadata.outputs.dependency-type == 'direct:development' &&
+            (steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+             steps.metadata.outputs.update-type == 'version-update:semver-minor')) ||
+           (steps.metadata.outputs.dependency-type == 'indirect' &&
+            steps.metadata.outputs.update-type == 'version-update:semver-patch'))
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
