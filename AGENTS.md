@@ -1,4 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
+
+This file provides guidance to AI coding agents working in this repository. Claude Code reads it natively (v2.1.277+), so there is deliberately no CLAUDE.md: when one exists, Claude Code reads it and ignores this file.
 
 YourEar is a browser-based hearing test: a Vite + TypeScript PWA with no UI framework, deployed to GitHub Pages. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full project tree and setup.
 
